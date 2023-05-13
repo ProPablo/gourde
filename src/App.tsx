@@ -6,11 +6,14 @@ import "./App.css";
 import Dropdown from "./components/Dropdown";
 import { appWindow } from "@tauri-apps/api/window";
 import { path, tauri } from "@tauri-apps/api";
+import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
+
+import styles from '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 const launchRatios = [
   "800x600",
-  "1366×768",
-  "1536×864",
+  "1280x720",
 ]
+const test: MessageModel[] = [{ direction: "incoming", message: "How can i help you today", position: "normal" }]
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -19,6 +22,9 @@ function App() {
   const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
   const [skipStagnate, setSkipStagnate] = useState(true);
   const [launchRatio, setLauchRatio] = useState(0);
+  // const [messages, setMessages] = useState<MessageModel[]>([]);
+  const [messages, setMessages] = useState<MessageModel[]>(test);
+  const [secondsPerDay, setSeconds] = useState<number>(0.5);
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -41,11 +47,18 @@ function App() {
     // // const child = await command.spawn();
     // const child = command.spawn();
     // console.log({ child, command });
+    // `--viewport`, `${launchRatios[launchRatio]}`
+    const currentRation = launchRatios[launchRatio];
+    const args = [`${location}`, , `-${currentRation}`];
+    if (skipStagnate) {
+      args.concat([`--auto-skip-seconds`, `0.1`]);
+    }
+
+    const res = await invoke('run_gource', { args })
+    console.log({ res, currentRation, args });
 
 
     // This doesnt kill the child after
-
-    // console.log({ res });
 
   }
   // async function generateGourceVideo() {
@@ -118,7 +131,17 @@ function App() {
             >OPEN</button>
           </div>
         </form>
-        <p>{greetMsg}</p>
+        <MainContainer>
+        <ChatContainer>
+          <MessageList>
+            {messages.map(m => (
+              <Message model={m} />
+
+            ))}
+          </MessageList>
+          <MessageInput placeholder="Type message here" />
+        </ChatContainer>
+      </MainContainer>
       </div >
     </>
   );
