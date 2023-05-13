@@ -13,6 +13,10 @@
   "tauri": {
     "allowlist": {
       "all": false,
+      "path": {
+        "all": true
+      },
+
       "shell": {
         "all": true,
         "scope": [
@@ -22,6 +26,7 @@
             "args": true
           }
         ]
+
       },
       "window": {
         "close": true
@@ -36,7 +41,9 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "externalBin": [],
+      "externalBin": [
+        "bin/ffmpeg"
+      ],
       "resources": [
         "bin/gource/*"
       ],

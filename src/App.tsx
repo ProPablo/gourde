@@ -5,6 +5,7 @@ import { Command } from "@tauri-apps/api/shell";
 import "./App.css";
 import Dropdown from "./components/Dropdown";
 import { appWindow } from "@tauri-apps/api/window";
+import { path, tauri } from "@tauri-apps/api";
 const launchRatios = [
   "800x600",
   "1366×768",
@@ -15,7 +16,7 @@ function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   // const [location, setLocation] = useState("");
-  const [location, setLocation] = useState(String.raw`C:\repos\rm_dashboard`);
+  const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
   const [skipStagnate, setSkipStagnate] = useState(true);
   const [launchRatio, setLauchRatio] = useState(0);
 
@@ -28,18 +29,23 @@ function App() {
     //     gource -1280x720 -o gource.ppm C:\\path\\to\\code\\repository
     // C:\\ffmpeg\\bin\\ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i gource.ppm -vcodec libx264 -preset medium -pix_fmt yuv420p -crf 1 -threads 0 -bf 0 gource.x264.avi
     // const command = Command.sidecar("bin/gource/gource");
+    // const gourceDir = await (await path.join((await path.resourceDir()), '/bin/gource')).replace(/^\\\\\?\\/, '');
+    // console.log((gourceDir));
 
-    const command = new Command("gource", [`${location}`, `--auto-skip-seconds`, `0.1`, `--viewport`, `${launchRatios[launchRatio]}`]);
 
-    // const res = await command.execute();
-    command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
-    command.stderr.on('data', line => console.log(`binary command stderr: "${line}"`));
-    const child = await command.spawn();
-    console.log({child, command});
-    
+    // const command = new Command("gource", [`${location}`, `--auto-skip-seconds`, `0.1`, `--viewport`, `${launchRatios[launchRatio]}`], { cwd: gourceDir });
+
+    // // const res = await command.execute();
+    // command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
+    // command.stderr.on('data', line => console.log(`binary command stderr: "${line}"`));
+    // // const child = await command.spawn();
+    // const child = command.spawn();
+    // console.log({ child, command });
+
+
     // This doesnt kill the child after
 
-    console.log({ res });
+    // console.log({ res });
 
   }
   // async function generateGourceVideo() {
@@ -53,6 +59,10 @@ function App() {
   return (
     <div className="flex bg-cyan-600 flex-col h-[100vh] align-middle w-full p-3 items-center justify-center ">
       <h1>Welcome to Tauri hey!</h1>
+          <button
+            className="btn"
+            onClick={()=> {invoke('run_gource', {args: ["Hey man"]})}}
+          >Test</button>
 
       <form
         onSubmit={(e) => {
@@ -80,7 +90,7 @@ function App() {
           ></input>
 
           <button
-            className=" btn"
+            className="btn"
             type="submit"
           >OPEN</button>
         </div>
