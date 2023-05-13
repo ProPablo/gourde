@@ -6,15 +6,33 @@ use std::{
     sync::Mutex,
 };
 
-use tauri::{AppHandle, Config, Manager, Runtime};
+use anyhow::{Result};
+use tauri::{AppHandle, Config, Manager, Runtime, State};
 
-struct Gource_Container {
+struct GourceContainer {
     child: Mutex<Option<Child>>,
 }
 
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+fn kill_old_child(maybe_old_child: &mut Option<Child>) -> Result<bool> {
+    match maybe_old_child.take() {
+        Some(mut old_thread) => {
+            println!("Stopping old child");
+            let res = old_thread.kill()?;
+            Ok(true)
+        }
+
+        None => Ok(false),
+    }
+}
+
 #[tauri::command]
-async fn run_gource<R: Runtime>(app: AppHandle<R>, args: Vec<String>) -> Result<(), String> {
+async fn run_gource<R: Runtime>(
+    app: AppHandle<R>,
+    args: Vec<String>,
+    state: State<'_, GourceContainer>,
+) -> Result<(), String> {
+    let mut maybe_child = state.child.lock().unwrap();
+
     // format!("Hello, {}! You've been greeted from Rust!", name)
     let mut gource_path = tauri::api::path::resource_dir(app.package_info(), &app.env()).unwrap();
     gource_path.push("bin/gource");
@@ -29,6 +47,7 @@ async fn run_gource<R: Runtime>(app: AppHandle<R>, args: Vec<String>) -> Result<
         .trim_start_matches("\\\\?\\")
         .to_string();
     println!("{:?}", final_string);
+
     let output = Command::new(final_string)
         .current_dir(gource_path)
         .args(args)
