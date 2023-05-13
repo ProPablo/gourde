@@ -21,9 +21,10 @@
             "cmd": "$RESOURCE/bin/gource/gource",
             "args": true
           }
-        ],
-
-        "open": true
+        ]
+      },
+      "window": {
+        "close": true
       }
     },
     "bundle": {
@@ -35,9 +36,10 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "externalBin": [
+      "externalBin": [],
+      "resources": [
+        "bin/gource/*"
       ],
-      "resources": ["bin/gource/*"],
       "identifier": "com.tauri.dev",
       "targets": "all"
     },
