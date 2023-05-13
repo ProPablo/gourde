@@ -8,6 +8,10 @@ import { appWindow } from "@tauri-apps/api/window";
 import { path, tauri } from "@tauri-apps/api";
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
+
+import { LexRuntimeV2 } from 'aws-sdk'
+
+
 const launchRatios = [
   "800x600",
   "1280x720",
@@ -52,8 +56,8 @@ function App() {
     if (skipStagnate) {
       args = args.concat([`--auto-skip-seconds`, `0.1`]);
     }
-    console.log({args});
-    
+    console.log({ args });
+
 
     const res = await invoke('run_gource', { args })
     console.log({ res, currentRation, args });
@@ -133,16 +137,16 @@ function App() {
           </div>
         </form>
         <MainContainer>
-        <ChatContainer>
-          <MessageList>
-            {messages.map(m => (
-              <Message model={m} />
+          <ChatContainer>
+            <MessageList>
+              {messages.map(m => (
+                <Message model={m} />
 
-            ))}
-          </MessageList>
-          <MessageInput placeholder="Type message here" />
-        </ChatContainer>
-      </MainContainer>
+              ))}
+            </MessageList>
+            <MessageInput placeholder="Type message here" />
+          </ChatContainer>
+        </MainContainer>
       </div >
     </>
   );
