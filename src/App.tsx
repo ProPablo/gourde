@@ -48,10 +48,12 @@ function App() {
     // console.log({ child, command });
     // `--viewport`, `${launchRatios[launchRatio]}`
     const currentRation = launchRatios[launchRatio];
-    const args = [`${location}`, , `-${currentRation}`];
+    let args = [`${location}`, `-${currentRation}`];
     if (skipStagnate) {
-      args.concat([`--auto-skip-seconds`, `0.1`]);
+      args = args.concat([`--auto-skip-seconds`, `0.1`]);
     }
+    console.log({args});
+    
 
     const res = await invoke('run_gource', { args })
     console.log({ res, currentRation, args });
