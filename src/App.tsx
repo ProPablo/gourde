@@ -57,46 +57,70 @@ function App() {
   })
 
   return (
-    <div className="flex bg-cyan-600 flex-col h-[100vh] align-middle w-full p-3 items-center justify-center ">
-      <h1>Welcome to Tauri hey!</h1>
-          <button
-            className="btn"
-            onClick={()=> {invoke('run_gource', {args: ["Hey man"]})}}
-          >Test</button>
+    <>
+      <div className="flex bg-[#3695ab] flex-col h-[100vh] align-middle w-full p-3 items-center justify-center ">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            runGource();
+          }}
+          className="flex flex-row justify-center h-1/2 flex-1"
+        >
+          <div className="flex flex-col mr-12 font-link bg-slate-600 p-6 rounded-lg">
+            <Dropdown
+              values={launchRatios}
+              name="ratio"
+              title="Aspect ratio to launch at"
+              onChange={(e) => {
+                console.log({ e });
+                setLauchRatio(e.target.selectedIndex)
+              }}
+            />
+            <div className="mt-6">
+              <label className="block mb-2 text-sm font-medium">Seconds per Day</label>
+              <input id="default-range" type="range" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
+            </div>
+            <div className="mt-6">
+              Viewport
+              <div className="flex items-center my-4">
+                <input id="default-radio-1" type="radio" value="" name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <label className="ml-2 text-sm font-medium">Fullscreen</label>
+              </div>
+              <div className="flex items-center">
+                <input id="default-radio-2" type="radio" value="" name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                <label className="ml-2 text-sm font-medium">Windowed</label>
+              </div>
+            </div>
+            <div className="flex flex-col my-6">
+              <p className="text-left">Date Range</p>
+              <div className="flex flex-row">
+                <input placeholder="Start date"
+                  className="input input-bordered rounded-lg text-xs w-1/2"
+                ></input>
+                <input placeholder="End date"
+                  className="input input-bordered rounded-lg text-xs w-1/2"
+                ></input>
+              </div>
+            </div>
+          </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          runGource();
-        }}
-        className="flex flex-row justify-center h-1/2 flex-1"
-      >
-        <div className="flex flex-col mr-20 ">
-          <Dropdown
-            values={launchRatios}
-            name="ratio"
-            title="Aspect ratio to launch at"
-            onChange={(e) => {
-              console.log({ e });
-              setLauchRatio(e.target.selectedIndex)
-            }}
-          />
-        </div>
-        <div className="items-center flex flex-row justify-center">
-          <input placeholder="Enter repo location..."
-            className="input input-bordered max-w-xs rounded-lg m-5"
-            onChange={e => { setLocation(e.target.value) }}
-            value={location}
-          ></input>
 
-          <button
-            className="btn"
-            type="submit"
-          >OPEN</button>
-        </div>
-      </form>
-      <p>{greetMsg}</p>
-    </div >
+          <div className="items-center flex flex-row font-link justify-center bg-slate-600 p-6 rounded-lg">
+            <input placeholder="Enter repo location..."
+              className="input input-bordered max-w-xs rounded-lg m-5"
+              onChange={e => { setLocation(e.target.value) }}
+              value={location}
+            ></input>
+
+            <button
+              className="btn font-link"
+              type="submit"
+            >OPEN</button>
+          </div>
+        </form>
+        <p>{greetMsg}</p>
+      </div >
+    </>
   );
 }
 

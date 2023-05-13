@@ -3,3 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
+.font-link {
+  font-family: 'Comic Mono', normal;
+}
