@@ -2,17 +2,18 @@ import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import { Command } from "@tauri-apps/api/shell";
+import './chat.scss'
 import "./App.css";
 import Dropdown from "./components/Dropdown";
 import { appWindow } from "@tauri-apps/api/window";
 import { path, tauri } from "@tauri-apps/api";
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
-import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
+// import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 const launchRatios = [
   "800x600",
   "1280x720",
 ]
-const test: MessageModel[] = [{ direction: "incoming", message: "How can i help you today", position: "normal" }]
+const test: MessageModel[] = [{ direction: "incoming", message: "Hello, how can I help you today?", position: "normal" }]
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -52,8 +53,8 @@ function App() {
     if (skipStagnate) {
       args = args.concat([`--auto-skip-seconds`, `0.1`]);
     }
-    console.log({args});
-    
+    console.log({ args });
+
 
     const res = await invoke('run_gource', { args })
     console.log({ res, currentRation, args });
@@ -106,7 +107,7 @@ function App() {
               </div>
             </div>
             <div className="flex flex-col my-6">
-              <p className="text-left">Date Range</p>
+              <p className="text-left mb-3">Date Range</p>
               <div className="flex flex-row">
                 <input placeholder="Start date"
                   className="input input-bordered rounded-lg text-xs w-1/2"
@@ -132,17 +133,21 @@ function App() {
             >OPEN</button>
           </div>
         </form>
-        <MainContainer>
-        <ChatContainer>
-          <MessageList>
-            {messages.map(m => (
-              <Message model={m} />
 
-            ))}
-          </MessageList>
-          <MessageInput placeholder="Type message here" />
-        </ChatContainer>
-      </MainContainer>
+        <div className="mt-6 w-full">
+
+          <MainContainer className="rounded-lg">
+            <ChatContainer>
+              <MessageList>
+                {messages.map(m => (
+                  <Message model={m} />
+
+                ))}
+              </MessageList>
+              <MessageInput placeholder="Enter text here" />
+            </ChatContainer>
+          </MainContainer>
+        </div>
       </div >
     </>
   );
