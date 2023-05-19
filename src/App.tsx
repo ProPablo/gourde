@@ -23,7 +23,8 @@ function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   // const [location, setLocation] = useState("");
-  const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
+  // const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
+  const [location, setLocation] = useState(String.raw`C:\repos\rm_dashboard`);
   const [skipStagnate, setSkipStagnate] = useState(true);
   const [launchRatio, setLauchRatio] = useState(1);
   // const [messages, setMessages] = useState<MessageModel[]>([]);

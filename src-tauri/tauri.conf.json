@@ -42,7 +42,6 @@
         "icons/icon.ico"
       ],
       "externalBin": [
-        "bin/ffmpeg"
       ],
       "resources": [
         "bin/gource/*"
