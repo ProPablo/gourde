@@ -7,9 +7,10 @@ import "./App.css";
 import Dropdown from "./components/Dropdown";
 import { appWindow } from "@tauri-apps/api/window";
 import { path, tauri } from "@tauri-apps/api";
+import { open } from '@tauri-apps/api/dialog';
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
 
-import { LexRuntimeV2 } from 'aws-sdk'
+// import { LexRuntimeV2 } from 'aws-sdk'
 // import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
 const launchRatios = [
 
@@ -91,7 +92,7 @@ function App() {
           }}
           className="flex flex-row justify-center h-1/2 flex-1"
         >
-          <div className="flex flex-col mr-12 font-link bg-slate-600 p-6 rounded-lg">
+          <div className="flex flex-col font-link mr-6 bg-slate-600 p-6 rounded-lg">
             <Dropdown
               values={launchRatios}
               name="ratio"
@@ -184,7 +185,7 @@ function App() {
           </div>
         </form>
 
-        <div className="mt-6 w-full">
+        {/* <div className="mt-6 w-full">
 
           <MainContainer className="rounded-lg">
             <ChatContainer>
@@ -197,7 +198,7 @@ function App() {
               <MessageInput placeholder="Enter text here" />
             </ChatContainer>
           </MainContainer>
-        </div>
+        </div> */}
       </div >
     </>
   );
