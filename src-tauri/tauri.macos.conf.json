@@ -1,0 +1,23 @@
+{
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": true,
+        "scope": [
+          {
+            "name": "bin/gource",
+            "args": true,
+            "sidecar": true
+          }
+        ]
+      }
+    },
+    "bundle": {
+      "active": true,
+      "externalBin": [
+        "bin/gource"
+      ]
+    }
+  }
+}
