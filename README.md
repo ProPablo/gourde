@@ -1,5 +1,5 @@
 # Gourd
-An GUI applcation to launch gource
+An GUI applcation to launch gource, alternatives either dont do a rendering that you can examine or do a timestep animation
 
 ## TODO
 - FFMPEG to make the videos 
