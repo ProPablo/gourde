@@ -7,8 +7,8 @@ import "./App.css";
 import Dropdown from "./components/Dropdown";
 import { appWindow } from "@tauri-apps/api/window";
 import { path, tauri } from "@tauri-apps/api";
-import { open } from '@tauri-apps/api/dialog';
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
+import { open, ask, OpenDialogOptions } from '@tauri-apps/api/dialog';
 
 // import { LexRuntimeV2 } from 'aws-sdk'
 // import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
@@ -36,6 +36,19 @@ function App() {
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
     setGreetMsg(await invoke("greet", { name }));
+  }
+
+  async function openDialog() {
+    const options: OpenDialogOptions = {
+      multiple: false,
+      directory: true,
+    };
+    const res = await open(options) as string;
+
+    console.log({ res });
+    if (res) {
+      setLocation(res);
+    }
   }
 
   async function runGource() {
@@ -171,7 +184,9 @@ function App() {
           </div>
 
 
-          <div className="items-center flex flex-row font-link justify-center bg-slate-600 p-6 rounded-lg">
+          <div className="items-center flex flex-col font-link justify-center bg-slate-600 p-6 rounded-lg">
+            <div className="flex flex-row items-center">
+
             <input placeholder="Enter repo location..."
               className="input input-bordered max-w-xs rounded-lg m-5"
               onChange={e => { setLocation(e.target.value) }}
@@ -179,9 +194,20 @@ function App() {
             ></input>
 
             <button
+            onClick={(e)=>{
+              e.preventDefault()
+              openDialog();
+            }}
+
               className="btn font-link"
-              type="submit"
             >OPEN</button>
+
+            </div>
+
+            <button
+              className="btn font-link m-16 p-12"
+              type="submit"
+            >Gource</button>
           </div>
         </form>
 

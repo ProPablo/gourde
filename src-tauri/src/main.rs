@@ -7,26 +7,26 @@ use std::{
 };
 
 use anyhow::Result;
-use tauri::api::process::Command as TauriCommand;
+use tauri::api::process::{Command as TauriCommand, CommandChild};
 use tauri::{AppHandle, Config, Manager, Runtime, State};
 
 struct GourceContainer {
     #[cfg(windows)]
     child: Mutex<Option<Child>>,
     #[cfg(not(windows))]
-    child: Mutex<Option<TauriCommand>>,
+    child: Mutex<Option<CommandChild>>,
 }
 
-
-
-fn kill_old_child(#[cfg(not(windows))] maybe_old_child: &mut Option<TauriCommand>, #[cfg(windows)] maybe_old_child: &mut Option<Child>) -> Result<bool> {
+fn kill_old_child(
+    #[cfg(not(windows))] maybe_old_child: &mut Option<TauriCommand>,
+    #[cfg(windows)] maybe_old_child: &mut Option<Child>,
+) -> Result<bool> {
     match maybe_old_child.take() {
         Some(mut old_thread) => {
             println!("Stopping old child");
             let res = old_thread.kill()?;
             Ok(true)
         }
-
         None => Ok(false),
     }
 }
@@ -79,22 +79,21 @@ async fn run_gource<R: Runtime>(
     }
     #[cfg(not(windows))]
     {
-        let res: std::result::Result<
-            (
-                tauri::async_runtime::Receiver<tauri::api::process::CommandEvent>,
-                tauri::api::process::CommandChild,
-            ),
-            tauri::api::Error,
-        > = TauriCommand::new_sidecar("gource")
+        run_gource_not_win(args, &mut maybe_child);
+    }
+    Ok(())
+}
+
+fn run_gource_not_win(args: Vec<String>,child: &mut Option<CommandChild>) {
+        let res = TauriCommand::new_sidecar("gource")
             .expect("failed to create `my-sidecar` binary command")
             .args(&args)
             .spawn();
 
         println!("{:?}", res);
-        let command_child = res.unwrap().1;
-    }
-    Ok(())
-    // ("".to_string())
+        let command_child: tauri::api::process::CommandChild = res.unwrap().1;
+        // Using derefence to mut reference to assign to it
+        *child = Some(command_child);
 }
 
 fn main() {
