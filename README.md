@@ -7,3 +7,5 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
 - File dialog to open the location
 - FFMPEG to make the videos 
 - Git-rs rust crate to temp download and host the repos, possibly logins
+- Create gource struct that is accessed through mods
+    - These mods are separate for windows and linux 
