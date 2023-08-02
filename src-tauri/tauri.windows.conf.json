@@ -21,6 +21,11 @@
             "name": "gource",
             "cmd": "$RESOURCE/bin/gource/gource",
             "args": true
+          },
+          {
+            "name": "bin/ffmpeg",
+            "args": true,
+            "sidecar": true
           }
         ]
       },
@@ -30,6 +35,9 @@
     },
     "bundle": {
       "active": true,
+      "externalBin": [
+        "bin/ffmpeg"
+      ],
       "resources": [
         "bin/gource/*"
       ]

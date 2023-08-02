@@ -6,7 +6,7 @@ use std::{
     sync::Mutex,
 };
 
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
 use tauri::api::process::{Command as TauriCommand, CommandChild};
 use tauri::{AppHandle, Config, Manager, Runtime, State};
 
@@ -33,11 +33,35 @@ fn kill_old_child(
 
 #[tauri::command]
 async fn kill_child(state: State<'_, GourceContainer>) -> Result<(), String> {
-    let mut maybe_child = state.child.lock().unwrap();
-    // TODO: use string as error propogation
-    kill_old_child(&mut maybe_child);
-    Ok(())
+    let mut maybe_child = state.child.lock();
+    if let Ok(maybe_child) = &mut maybe_child {
+        match kill_old_child(maybe_child) {
+            Ok(_) => return Ok(()),
+            Err(e) => return Err(e.to_string()),
+        }
+    }
+    Err("Failed to lock mutex".to_string())
 }
+
+enum FolderResult {
+    GitRepo,
+    NotGitRepo,
+    NotFolder,
+}
+
+async fn is_file_git_repo(path: &str) -> FolderResult {
+    let mut git_path = std::path::PathBuf::from(path);
+    if (!git_path.is_dir()) {
+        return FolderResult::NotFolder;
+    }
+    git_path.push(".git");
+    if (git_path.exists()) {
+        return FolderResult::GitRepo;
+    } else {
+        return FolderResult::NotGitRepo;
+    }
+}
+
 
 #[tauri::command]
 async fn run_gource<R: Runtime>(
@@ -45,12 +69,23 @@ async fn run_gource<R: Runtime>(
     args: Vec<String>,
     state: State<'_, GourceContainer>,
 ) -> Result<(), String> {
-    let mut maybe_child = state.child.lock().unwrap();
     #[cfg(windows)]
     {
-        // Ensure directory exists and is git repo before continueing execution
-        // TODO: catch error and send err event
-        kill_old_child(&mut maybe_child);
+        {
+            let mut maybe_child = state.child.lock().unwrap();
+            if let Err(e) = kill_old_child(&mut maybe_child) {
+                return Err(e.to_string());
+            }
+        }
+        match is_file_git_repo(&args[0]).await {
+            FolderResult::GitRepo => {}
+            FolderResult::NotGitRepo => {
+                return Err("Not a git repo".to_string());
+            }
+            FolderResult::NotFolder => {
+                return Err("Not a folder".to_string());
+            }
+        }
 
         let mut gource_path =
             tauri::api::path::resource_dir(app.package_info(), &app.env()).unwrap();
@@ -75,6 +110,8 @@ async fn run_gource<R: Runtime>(
             .expect("failed to execute process");
         // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
         // https://github.com/tauri-apps/tauri/discussions/3273
+
+        let mut maybe_child = state.child.lock().unwrap();
         *maybe_child = Some(output);
     }
     #[cfg(not(windows))]
@@ -84,16 +121,16 @@ async fn run_gource<R: Runtime>(
     Ok(())
 }
 
-fn run_gource_not_win(args: Vec<String>,child: &mut Option<CommandChild>) {
-        let res = TauriCommand::new_sidecar("gource")
-            .expect("failed to create `my-sidecar` binary command")
-            .args(&args)
-            .spawn();
+fn run_gource_not_win(args: Vec<String>, child: &mut Option<CommandChild>) {
+    let res = TauriCommand::new_sidecar("gource")
+        .expect("failed to create `my-sidecar` binary command")
+        .args(&args)
+        .spawn();
 
-        println!("{:?}", res);
-        let command_child: tauri::api::process::CommandChild = res.unwrap().1;
-        // Using derefence to mut reference to assign to it
-        *child = Some(command_child);
+    println!("{:?}", res);
+    let command_child: tauri::api::process::CommandChild = res.unwrap().1;
+    // Using derefence to mut reference to assign to it
+    *child = Some(command_child);
 }
 
 fn main() {
