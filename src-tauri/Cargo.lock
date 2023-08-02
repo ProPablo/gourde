@@ -1067,6 +1067,7 @@ dependencies = [
  "anyhow",
  "serde",
  "serde_json",
+ "shared_child",
  "tauri",
  "tauri-build",
 ]

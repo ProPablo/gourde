@@ -10,32 +10,44 @@ use std::{
 use anyhow::{bail, Context, Result};
 use tauri::api::process::{Command as TauriCommand, CommandChild};
 use tauri::{AppHandle, Config, Manager, Runtime, State};
+// SharedChild is very much needed becuase even tauri uses it, see https://crates.io/crates/shared_child
+use shared_child::SharedChild;
 
-type SharedChild = Arc<Child>;
-type ChildContainer = Mutex<Option<SharedChild>>;
+type ChildContainer = Mutex<Option<Arc<SharedChild>>>;
 
 struct GourceContainer {
     child: ChildContainer,
 }
 
 fn kill_old_child(containter: &GourceContainer) -> Result<bool, String> {
-    let mut maybe_child = containter.child.lock();
-    match &mut maybe_child {
-        Ok(maybe_child) => match maybe_child.take() {
-            Some( old_thread) => {
-                println!("Stopping old child");
-                old_thread.kill().map_err(|e| e.to_string()).map(|_| true)
+    // let mut maybe_child = containter.child.lock();
+    // match &mut maybe_child {
+    //     Ok(maybe_child) =>
+    //     match maybe_child.take() {
+    //         Some( old_thread) => {
+    //             println!("Stopping old child");
+    //             old_thread.kill().map_err(|e| e.to_string()).map(|_| true)
+    //         }
+    //         None => Ok(false),
+    //     },
+    //     Err(e) => Err("Failed to lock mutex".to_string()),
+    // }
+
+    match containter.child.lock().unwrap().take() {
+        Some(child) => {
+            println!("Stopping old child");
+            child.kill().map_err(|e| e.to_string()).map(|_| true)
+                // Ok(child) => child.kill().map_err(|e| e.to_string()).map(|_| true),
+                // Err(e) => Err("Failed to lock mutex".to_string()),
             }
-            None => Ok(false),
-        },
-        Err(e) => Err("Failed to lock mutex".to_string()),
+        None => Ok(false),
     }
 }
 
 #[tauri::command]
 fn kill_child(state: State<'_, GourceContainer>) -> Result<bool, String> {
     // State.Inner gives access to the struct inside the state as a reference in case
-    kill_old_child(&state.inner())
+    kill_old_child(&mut state.inner())
 }
 
 enum FolderResult {
@@ -57,66 +69,71 @@ async fn is_file_git_repo(path: &str) -> FolderResult {
     }
 }
 
+struct GourceRes {}
+
 #[tauri::command]
 async fn run_gource<'a, R: Runtime>(
     app: AppHandle<R>,
     args: Vec<String>,
     state: State<'a, GourceContainer>,
 ) -> Result<(), String> {
-
-        match is_file_git_repo(&args[0]).await {
-            FolderResult::GitRepo => {}
-            FolderResult::NotGitRepo => {
-                return Err("Not a git repo".to_string());
-            }
-            FolderResult::NotFolder => {
-                return Err("Not a folder".to_string());
-            }
+    match is_file_git_repo(&args[0]).await {
+        FolderResult::GitRepo => {}
+        FolderResult::NotGitRepo => {
+            return Err("Not a git repo".to_string());
         }
-
-        {
-            let  inner = state.inner();
-            if let Err(e) = kill_old_child(inner) {
-                return Err(e.to_string());
-            }
+        FolderResult::NotFolder => {
+            return Err("Not a folder".to_string());
         }
+    }
 
-        let mut gource_path =
-            tauri::api::path::resource_dir(app.package_info(), &app.env()).unwrap();
-        gource_path.push("bin/gource");
-        let mut gource_bin = gource_path.clone();
-        gource_bin.push("gource");
-        let final_string = gource_bin
-            .to_str()
-            .unwrap()
-            .to_string()
-            // These characters are for long file matching which is unlikley in this case since the location of bin is likely program files, causes resource load error in gource
-            .trim_start_matches("\\\\?\\")
-            .to_string();
-        println!("Gource path:{:?}", final_string);
-        let maybe_output = Command::new(final_string)
-            .current_dir(gource_path)
-            .args(&args)
-            .spawn();
+    {
+        let inner = state.inner();
+        if let Err(e) = kill_old_child(inner) {
+            return Err(e.to_string());
+        }
+    }
 
-        match maybe_output {
-            Ok(mut output) => {
-                // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
-                let shared_child = Arc::new(Mutex::new(output));
+    let mut gource_path = tauri::api::path::resource_dir(app.package_info(), &app.env()).unwrap();
+    gource_path.push("bin/gource");
+    let mut gource_bin = gource_path.clone();
+    gource_bin.push("gource");
+    let final_string = gource_bin
+        .to_str()
+        .unwrap()
+        .to_string()
+        // These characters are for long file matching which is unlikley in this case since the location of bin is likely program files, causes resource load error in gource
+        .trim_start_matches("\\\\?\\")
+        .to_string();
+    println!("Gource path:{:?}", final_string);
+    let maybe_output = Command::new(final_string)
+        .current_dir(gource_path)
+        .args(&args)
+        .spawn();
 
-                let cloned_child = shared_child.clone();
+    match maybe_output {
+        Ok(mut output) => {
+            // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
+            let shared_child = Arc::new(SharedChild::new(output).unwrap());
+            let cloned_child = shared_child.clone();
+            // let app_clone = app.clone();
 
-                let t = std::thread::spawn(move || {
-                    let _ = cloned_child.lock().unwrap().wait();
-                    println!("Gource finished");
-                });
+            let t = std::thread::spawn(move || {
+                let res = cloned_child.wait();
 
-                // let mut maybe_child = state.child.lock().unwrap();
-                // *maybe_child = Some(shared_child);
-            }
-            Err(e) => {
-                return Err(e.to_string());
-            }
+                app
+                    .emit_all("gource-finished", ())
+                    .expect("failed to emit event");
+
+                println!("Gource finished");
+            });
+
+            let mut maybe_child = state.child.lock().unwrap();
+            *maybe_child = Some(shared_child);
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
     }
     Ok(())
 }

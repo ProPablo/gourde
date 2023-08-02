@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke} from "@tauri-apps/api/tauri";
 import { Command } from "@tauri-apps/api/shell";
+import { listen } from '@tauri-apps/api/event'
 import './chat.scss'
 import "./App.css";
 import Dropdown from "./components/Dropdown";
@@ -115,11 +116,8 @@ function App() {
 
     const res = await invoke('run_gource', { args })
     console.log({ res, currentRation, args });
+    setRunning(true);
 
-
-    if (outputVideo) {
-      await outputVideoHandler();
-    }
 
     // This doesnt kill the child after
 
@@ -128,6 +126,10 @@ function App() {
   useEffect(() => {
     appWindow.listen("close", ({ event, payload }) => {
       console.log({ event, payload });
+    });
+    listen("gource-finished", ({ event, payload }) => {
+      console.log({ event, payload }, "Gource is finished");
+      setRunning(false);
     });
 
   })
@@ -245,6 +247,7 @@ function App() {
               className="btn font-link m-16 p-12"
               type="submit"
             >Gource</button>
+            <span className="badge">{running ? 'Gource is running': 'Gource is not Running'}</span>
           </div>
         </form>
 
