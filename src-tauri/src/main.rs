@@ -3,7 +3,7 @@
 
 use std::{
     process::{Child, Command},
-    sync::Mutex,
+    sync::{Arc, Mutex}, os::windows::prelude::AsHandle,
 };
 
 use anyhow::{bail, Context, Result};
@@ -11,16 +11,10 @@ use tauri::api::process::{Command as TauriCommand, CommandChild};
 use tauri::{AppHandle, Config, Manager, Runtime, State};
 
 struct GourceContainer {
-    #[cfg(windows)]
     child: Mutex<Option<Child>>,
-    #[cfg(not(windows))]
-    child: Mutex<Option<CommandChild>>,
 }
 
-fn kill_old_child(
-    #[cfg(not(windows))] maybe_old_child: &mut Option<TauriCommand>,
-    #[cfg(windows)] maybe_old_child: &mut Option<Child>,
-) -> Result<bool> {
+fn kill_old_child(maybe_old_child: &mut Option<Child>) -> Result<bool> {
     match maybe_old_child.take() {
         Some(mut old_thread) => {
             println!("Stopping old child");
@@ -62,7 +56,6 @@ async fn is_file_git_repo(path: &str) -> FolderResult {
     }
 }
 
-
 #[tauri::command]
 async fn run_gource<R: Runtime>(
     app: AppHandle<R>,
@@ -100,19 +93,26 @@ async fn run_gource<R: Runtime>(
             .trim_start_matches("\\\\?\\")
             .to_string();
         println!("Gource path:{:?}", final_string);
-
-        let output = Command::new(final_string)
+        let maybe_output = Command::new(final_string)
             .current_dir(gource_path)
             .args(&args)
-            // .arg("D:/rm_dashboard")
-            .spawn()
-            // Dont expect here since that poisons the mutex, instead return error with string explaining what happend
-            .expect("failed to execute process");
-        // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
-        // https://github.com/tauri-apps/tauri/discussions/3273
+            .spawn();
 
-        let mut maybe_child = state.child.lock().unwrap();
-        *maybe_child = Some(output);
+        match maybe_output {
+            Ok(mut output) => {
+                // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
+
+                // let t = std::thread::spawn(move || {
+                //     let _ = output.wait();
+                //     println!("Gource finished");
+                // });
+                let mut maybe_child = state.child.lock().unwrap();
+                *maybe_child = Some(output);
+            }
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        }
     }
     #[cfg(not(windows))]
     {
@@ -137,9 +137,13 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![run_gource, kill_child])
         .manage(GourceContainer {
+            // child: Arc::new(Mutex::new(None)),
             child: Mutex::new(None),
         })
-        // .on_window_event(move |event| match event)
+        // https://github.com/tauri-apps/tauri/discussions/3273
+        .on_window_event(move |event| {
+            let thing: State<'_, GourceContainer> = event.window().state();
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

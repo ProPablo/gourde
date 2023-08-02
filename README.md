@@ -5,6 +5,7 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
 
 
 - link the gource source as a submodule instead 
+- Generate gource bin for linux
 - Create gource struct that is accessed through mods
     - These mods are separate for windows and linux 
 

@@ -32,6 +32,7 @@ function App() {
   const [messages, setMessages] = useState<MessageModel[]>(test);
   const [secondsPerDay, setSeconds] = useState<number>(50);
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
+  const [running, setRunning] = useState<boolean>(false);
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -52,14 +53,35 @@ function App() {
   }
 
   async function outputVideoHandler() {
-
+    // Launch a sidecar with the ffmpeg command
+    const command = Command.sidecar("bin/ffmpeg", [
+      "-y",
+      "-r",
+      "60",
+      "-f",
+      "image2pipe",
+      "-vcodec",
+      "ppm",
+      "-i",
+      "gource.ppm",
+      "-vcodec",
+      "libx264",
+      "-preset",
+      "medium",
+      "-pix_fmt",
+      "yuv420p",
+      "-crf",
+      "1",
+      "-threads",
+      "0",
+      "-bf",
+      "0",
+      "gource.x264.avi",
+    ]);
+    await command.execute();
   }
 
   async function runGource() {
-    if (outputVideo) {
-      await outputVideoHandler();
-      return;
-    }
     //     gource -1280x720 -o gource.ppm C:\\path\\to\\code\\repository
     // C:\\ffmpeg\\bin\\ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i gource.ppm -vcodec libx264 -preset medium -pix_fmt yuv420p -crf 1 -threads 0 -bf 0 gource.x264.avi
     // const command = Command.sidecar("bin/gource/gource");
@@ -87,10 +109,17 @@ function App() {
 
     console.log({ args });
 
+    if (outputVideo) {
+      args = args.concat([`-o`, `gource.ppm`]);
+    }
 
     const res = await invoke('run_gource', { args })
     console.log({ res, currentRation, args });
 
+
+    if (outputVideo) {
+      await outputVideoHandler();
+    }
 
     // This doesnt kill the child after
 
@@ -195,20 +224,20 @@ function App() {
           <div className="items-center flex flex-col font-link justify-center bg-slate-600 p-6 rounded-lg">
             <div className="flex flex-row items-center">
 
-            <input placeholder="Enter repo location..."
-              className="input input-bordered max-w-xs rounded-lg m-5"
-              onChange={e => { setLocation(e.target.value) }}
-              value={location}
-            ></input>
+              <input placeholder="Enter repo location..."
+                className="input input-bordered max-w-xs rounded-lg m-5"
+                onChange={e => { setLocation(e.target.value) }}
+                value={location}
+              ></input>
 
-            <button
-            onClick={(e)=>{
-              e.preventDefault()
-              openDialog();
-            }}
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  openDialog();
+                }}
 
-              className="btn font-link"
-            >OPEN</button>
+                className="btn font-link"
+              >OPEN</button>
 
             </div>
 

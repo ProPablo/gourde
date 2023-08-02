@@ -26,3 +26,4 @@ dist-ssr
 
 # You have to add this in yourself since its very big
 src-tauri/bin/ffmpeg-x86_64-pc-windows-msvc.exe
+*.ppm
