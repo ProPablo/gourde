@@ -47,6 +47,7 @@ fn kill_old_child(containter: &GourceContainer) -> Result<bool, String> {
 #[tauri::command]
 fn kill_child(state: State<'_, GourceContainer>) -> Result<bool, String> {
     // State.Inner gives access to the struct inside the state as a reference in case
+    // Be better if u just passed around teh state (arc) clone
     kill_old_child(&mut state.inner())
 }
 
@@ -69,7 +70,6 @@ async fn is_file_git_repo(path: &str) -> FolderResult {
     }
 }
 
-struct GourceRes {}
 
 #[tauri::command]
 async fn run_gource<'a, R: Runtime>(
@@ -159,7 +159,14 @@ fn main() {
         })
         // https://github.com/tauri-apps/tauri/discussions/3273
         .on_window_event(move |event| {
-            let thing: State<'_, GourceContainer> = event.window().state();
+            match event.event() {
+                tauri::WindowEvent::Destroyed => {
+                    println!("Window is closing");
+                    let thing: State<'_, GourceContainer> = event.window().state();
+                    kill_old_child(&thing.inner()).unwrap();
+                }
+                _ => {}
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

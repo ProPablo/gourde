@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
-import { invoke} from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/tauri";
 import { Command } from "@tauri-apps/api/shell";
 import { listen } from '@tauri-apps/api/event'
+import { removeFile } from '@tauri-apps/api/fs'
 import './chat.scss'
 import "./App.css";
 import Dropdown from "./components/Dropdown";
 import { appWindow } from "@tauri-apps/api/window";
-import { path, tauri } from "@tauri-apps/api";
+import { os, path, tauri } from "@tauri-apps/api";
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
 import { open, ask, OpenDialogOptions } from '@tauri-apps/api/dialog';
+import Terminal from "./components/Terminal";
 
 // import { LexRuntimeV2 } from 'aws-sdk'
 // import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
@@ -19,6 +21,15 @@ const launchRatios = [
   "1280x720",
 ]
 const test: MessageModel[] = [{ direction: "incoming", message: "Hello, how can I help you today?", position: "normal" }]
+
+
+const testLines = [
+  "Hello, how can I help you today?",
+  "I'm doing well, thanks for asking!",
+  "I'm doing well, thanks for asking!",
+  "I'm doing well, thanks for asking!",
+];
+
 
 const MAX_SECONDS_PERDAY = 5;
 function App() {
@@ -33,6 +44,7 @@ function App() {
   const [messages, setMessages] = useState<MessageModel[]>(test);
   const [secondsPerDay, setSeconds] = useState<number>(50);
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
+  const [ffmpegOutput, setFFmpegOutput] = useState<string[]>([]);
   const [running, setRunning] = useState<boolean>(false);
 
   async function greet() {
@@ -53,8 +65,22 @@ function App() {
     }
   }
 
+  const getppmLoc = async () => {
+    // const appDir = await path.appLocalDataDir();
+    const appDir = await os.tempdir();
+    const binDir = await path.join(appDir, `gource.ppm`);
+    return binDir;
+  }
+  const getOutputLoc = async () => {
+    const appDir = await os.tempdir();
+    const binDir = await path.join(appDir, `gource.x264.avi`);
+    return binDir;
+  }
+
+
   async function outputVideoHandler() {
-    // Launch a sidecar with the ffmpeg command
+    let outputLoc = await getOutputLoc();
+    let ppmLoc = await getppmLoc();
     const command = Command.sidecar("bin/ffmpeg", [
       "-y",
       "-r",
@@ -64,7 +90,7 @@ function App() {
       "-vcodec",
       "ppm",
       "-i",
-      "gource.ppm",
+      `${ppmLoc}`,
       "-vcodec",
       "libx264",
       "-preset",
@@ -77,28 +103,22 @@ function App() {
       "0",
       "-bf",
       "0",
-      "gource.x264.avi",
+      `${outputLoc}`,
     ]);
-    await command.execute();
+    const res = await command.execute();
+    console.log({ res });
+    await removeFile(ppmLoc);
+    setOutputVideo(false);
+  }
+
+  async function killGource() {
+    const res = await invoke('kill_gource')
+    console.log({ res });
+    setRunning(false);
   }
 
   async function runGource() {
-    //     gource -1280x720 -o gource.ppm C:\\path\\to\\code\\repository
-    // C:\\ffmpeg\\bin\\ffmpeg -y -r 60 -f image2pipe -vcodec ppm -i gource.ppm -vcodec libx264 -preset medium -pix_fmt yuv420p -crf 1 -threads 0 -bf 0 gource.x264.avi
-    // const command = Command.sidecar("bin/gource/gource");
-    // const gourceDir = await (await path.join((await path.resourceDir()), '/bin/gource')).replace(/^\\\\\?\\/, '');
-    // console.log((gourceDir));
 
-
-    // const command = new Command("gource", [`${location}`, `--auto-skip-seconds`, `0.1`, `--viewport`, `${launchRatios[launchRatio]}`], { cwd: gourceDir });
-
-    // // const res = await command.execute();
-    // command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
-    // command.stderr.on('data', line => console.log(`binary command stderr: "${line}"`));
-    // // const child = await command.spawn();
-    // const child = command.spawn();
-    // console.log({ child, command });
-    // `--viewport`, `${launchRatios[launchRatio]}`
     const currentRation = launchRatios[launchRatio - 1];
     let args = [`${location}`, `-${currentRation}`];
     if (skipStagnate) {
@@ -111,18 +131,15 @@ function App() {
     console.log({ args });
 
     if (outputVideo) {
-      args = args.concat([`-o`, `gource.ppm`]);
+      let ppmLoc = await getppmLoc();
+      args = args.concat([`-o`, `${ppmLoc}`]);
     }
 
     const res = await invoke('run_gource', { args })
     console.log({ res, currentRation, args });
     setRunning(true);
-
-
-    // This doesnt kill the child after
-
   }
-  // async function generateGourceVideo() {
+
   useEffect(() => {
     appWindow.listen("close", ({ event, payload }) => {
       console.log({ event, payload });
@@ -130,8 +147,10 @@ function App() {
     listen("gource-finished", ({ event, payload }) => {
       console.log({ event, payload }, "Gource is finished");
       setRunning(false);
+      if (outputVideo) {
+        outputVideoHandler();
+      }
     });
-
   })
 
   return (
@@ -188,6 +207,18 @@ function App() {
                 <input id="default-radio-2" type="radio" value="" name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                 <label className="ml-2 text-sm font-medium">Windowed</label>
               </div> */}
+
+
+              <button
+                className="btn btn-primary mt-6"
+                onClick={(e) => {
+                  e.preventDefault();
+                  outputVideoHandler();
+                }}
+              >
+                Hey man
+              </button>
+
 
               <div className="mt-6">
                 <label className="label cursor-pointer">
@@ -247,7 +278,8 @@ function App() {
               className="btn font-link m-16 p-12"
               type="submit"
             >Gource</button>
-            <span className="badge">{running ? 'Gource is running': 'Gource is not Running'}</span>
+            <span className="badge">{running ? 'Gource is running' : 'Gource is not Running'}</span>
+            <Terminal lines={testLines} />
           </div>
         </form>
 
