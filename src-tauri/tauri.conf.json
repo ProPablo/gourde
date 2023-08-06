@@ -27,6 +27,10 @@
         "open": true, 
         "save": true 
       },
+      "fs": {
+        "all": false,
+        "removeFile": true
+      },
 
       "shell": {
         "all": true

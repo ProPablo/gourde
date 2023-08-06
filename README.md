@@ -29,3 +29,5 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
 
 
 - ~~File dialog to open the location~~
+
+- Lower scope for fs delete to only temp stuff
