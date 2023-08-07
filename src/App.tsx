@@ -59,7 +59,7 @@ function App() {
     };
     const res = await open(options) as string;
 
-    console.log({ res });
+    // console.log({ res });
     if (res) {
       setLocation(res);
     }
@@ -79,6 +79,7 @@ function App() {
 
 
   async function outputVideoHandler() {
+    debugger;
     let outputLoc = await getOutputLoc();
     let ppmLoc = await getppmLoc();
     const command = Command.sidecar("bin/ffmpeg", [
@@ -140,17 +141,29 @@ function App() {
     setRunning(true);
   }
 
+  // https://github.com/tauri-apps/tauri/discussions/5194
+  // Shows how unlistening can be important
   useEffect(() => {
-    appWindow.listen("close", ({ event, payload }) => {
+
+    const appWindowCloseUnListen = appWindow.listen("close", ({ event, payload }) => {
       console.log({ event, payload });
     });
-    listen("gource-finished", ({ event, payload }) => {
+    const gourceFinishedUnlisten =  listen("gource-finished", ({ event, payload }) => {
       console.log({ event, payload }, "Gource is finished");
       setRunning(false);
       if (outputVideo) {
         outputVideoHandler();
       }
     });
+    const unMount = (async () => {
+      (await appWindowCloseUnListen)();
+      (await gourceFinishedUnlisten)();
+
+    });
+    return () => {
+      unMount();
+
+    }
   }, []);
 
   return (
@@ -283,20 +296,6 @@ function App() {
           </div>
         </form>
 
-        {/* <div className="mt-6 w-full">
-
-          <MainContainer className="rounded-lg">
-            <ChatContainer>
-              <MessageList>
-                {messages.map(m => (
-                  <Message model={m} />
-
-                ))}
-              </MessageList>
-              <MessageInput placeholder="Enter text here" />
-            </ChatContainer>
-          </MainContainer>
-        </div> */}
       </div >
     </>
   );
