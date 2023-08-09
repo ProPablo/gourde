@@ -5,11 +5,13 @@ pub trait Gource {
     fn kill_old_child(&self) -> Result<bool, String>;
 }
 
-#[cfg(not(windows))]
-struct GourceLinux {}
 
 #[cfg(windows)]
 pub mod windows;
+
+
+// #[cfg(not(windows))]
+pub mod linux;
 
 use tauri::{Runtime, AppHandle};
 #[cfg(windows)]

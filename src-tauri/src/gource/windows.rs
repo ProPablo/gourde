@@ -1,5 +1,7 @@
 use std::{sync::{Arc, Mutex}, process::Command};
 
+use anyhow::{bail, Context, Result};
+
 use shared_child::SharedChild;
 use tauri::{Runtime, AppHandle, Manager};
 

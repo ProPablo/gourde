@@ -63,18 +63,6 @@ async fn run_gource<'a, R: Runtime>(
     state.run_gource(app, args)
 }
 
-fn run_gource_not_win(args: Vec<String>, child: &mut Option<CommandChild>) {
-    let res = TauriCommand::new_sidecar("gource")
-        .expect("failed to create `my-sidecar` binary command")
-        .args(&args)
-        .spawn();
-
-    println!("{:?}", res);
-    let command_child: tauri::api::process::CommandChild = res.unwrap().1;
-    // Using derefence to mut reference to assign to it
-    *child = Some(command_child);
-}
-
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![run_gource, kill_child])
@@ -86,8 +74,12 @@ fn main() {
         .on_window_event(move |event| match event.event() {
             tauri::WindowEvent::Destroyed => {
                 println!("Window is closing");
-                let state: State<'_, GourceContainer> = event.window().state();
-                state.kill_old_child();
+
+                #[cfg(windows)]
+                {
+                    let state: State<'_, GourceContainer> = event.window().state();
+                    state.kill_old_child();
+                }
             }
             _ => {}
         })
