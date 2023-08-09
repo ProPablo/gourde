@@ -16,7 +16,7 @@ export default function Terminal(props: IProps) {
                     <p className="typing flex-1 items-center pl-2">
                         {
                             props.lines.map((line, i) => (
-                                <>{line}<br /></>
+                                <span key={i}>{line}<br /></span>
                             ))
                         }
                     </p>

@@ -10,7 +10,7 @@ pub trait Gource {
 pub mod windows;
 
 
-// #[cfg(not(windows))]
+#[cfg(not(windows))]
 pub mod linux;
 
 use tauri::{Runtime, AppHandle};
@@ -18,4 +18,4 @@ use tauri::{Runtime, AppHandle};
 pub use windows::GourceWindows as GourceContainer;
 
 #[cfg(not(windows))]
-pub use GourceLinux as GourceContainer;
+pub use linux::GourceLinux as GourceContainer;
