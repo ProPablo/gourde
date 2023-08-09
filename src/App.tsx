@@ -78,11 +78,12 @@ function App() {
   }
 
 
+  // Handling this client side, we could listen to the event in an actor thread on rust side
   async function outputVideoHandler() {
-    debugger;
+    let type = await os.type();
     let outputLoc = await getOutputLoc();
     let ppmLoc = await getppmLoc();
-    const command = Command.sidecar("bin/ffmpeg", [
+    let args = [
       "-y",
       "-r",
       "60",
@@ -105,11 +106,20 @@ function App() {
       "-bf",
       "0",
       `${outputLoc}`,
-    ]);
-    const res = await command.execute();
+    ];
+
+    let res;
+    if (type == "Windows_NT") {
+      const command = Command.sidecar("bin/ffmpeg",);
+      res = await command.execute();
+    } else {
+      const command = new Command("ffmpeg", args);
+      res = await command.execute();
+    }
+    setOutputVideo(false);
     console.log({ res });
     await removeFile(ppmLoc);
-    setOutputVideo(false);
+
   }
 
   async function killGource() {
@@ -148,7 +158,7 @@ function App() {
     const appWindowCloseUnListen = appWindow.listen("close", ({ event, payload }) => {
       console.log({ event, payload });
     });
-    const gourceFinishedUnlisten =  listen("gource-finished", ({ event, payload }) => {
+    const gourceFinishedUnlisten = listen("gource-finished", ({ event, payload }) => {
       console.log({ event, payload }, "Gource is finished");
       setRunning(false);
       if (outputVideo) {
