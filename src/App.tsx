@@ -126,7 +126,7 @@ function App() {
   }
 
   async function killGource() {
-    const res = await invoke('kill_gource')
+    const res = await invoke('kill_child')
     console.log({ res });
     setRunning(false);
   }
