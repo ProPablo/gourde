@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import { Command } from "@tauri-apps/api/shell";
-import { listen } from '@tauri-apps/api/event'
+import { EventCallback, listen } from '@tauri-apps/api/event'
 import { removeFile } from '@tauri-apps/api/fs'
 import './chat.scss'
 import "./App.css";
@@ -80,6 +80,8 @@ function App() {
 
   // Handling this client side, we could listen to the event in an actor thread on rust side
   async function outputVideoHandler() {
+    console.log("outputVideoHandler");
+
     let type = await os.type();
     let outputLoc = await getOutputLoc();
     let ppmLoc = await getppmLoc();
@@ -107,6 +109,8 @@ function App() {
       "0",
       `${outputLoc}`,
     ];
+    console.log({ args });
+
 
     let res;
     if (type == "Windows_NT") {
@@ -151,23 +155,40 @@ function App() {
     setRunning(true);
   }
 
-  // https://github.com/tauri-apps/tauri/discussions/5194
-  // Shows how unlistening can be important
   useEffect(() => {
 
-    const appWindowCloseUnListen = appWindow.listen("close", ({ event, payload }) => {
-      console.log({ event, payload });
-    });
-    const gourceFinishedUnlisten = listen("gource-finished", ({ event, payload }) => {
+    const gourceFinishedHandler: EventCallback<unknown> = ({ event, payload }) => {
       console.log({ event, payload }, "Gource is finished");
       setRunning(false);
       if (outputVideo) {
         outputVideoHandler();
       }
+    }
+
+    const gourceFinishedUnlisten = listen("gource-finished", gourceFinishedHandler);
+    const unMount = (async () => {
+      (await gourceFinishedUnlisten)();
     });
+    return () => {
+      unMount();
+    }
+
+  }, [outputVideo]);
+
+
+
+
+
+  // https://github.com/tauri-apps/tauri/discussions/5194
+  // Shows how unlistening can be important because of strict mode
+  useEffect(() => {
+
+    const appWindowCloseHandler: EventCallback<unknown> = ({ event, payload }) => {
+      console.log({ event, payload });
+    }
+    const appWindowCloseUnListen = appWindow.listen("close", appWindowCloseHandler);
     const unMount = (async () => {
       (await appWindowCloseUnListen)();
-      (await gourceFinishedUnlisten)();
 
     });
     return () => {
@@ -189,9 +210,7 @@ function App() {
           <div className="flex flex-col font-link mr-6 bg-slate-600 p-6 rounded-lg">
             <Dropdown
               values={launchRatios}
-              name="ratio"
-              title="Aspect ratio to launch at"
-              onChange={(e) => {
+              name="ratio" title="Aspect ratio to launch at" onChange={(e) => {
                 console.log({ e });
                 setLauchRatio(e.target.selectedIndex)
               }}
@@ -256,7 +275,7 @@ function App() {
                 <label className="label cursor-pointer">
                   <span className="label-text">Output video</span>
                   <input type="checkbox" checked={outputVideo}
-                    onChange={() => setOutputVideo(!outputVideo)}
+                    onChange={() => setOutputVideo((prev) => !prev)}
                     className="checkbox" />
                 </label>
               </div>
