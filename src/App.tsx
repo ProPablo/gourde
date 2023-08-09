@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { Command } from "@tauri-apps/api/shell";
 import { listen } from '@tauri-apps/api/event'
 import { removeFile } from '@tauri-apps/api/fs'
+import { useToast } from "./hooks/useToast";
 import './chat.scss'
 import "./App.css";
 import Dropdown from "./components/Dropdown";
@@ -12,6 +13,7 @@ import { os, path, tauri } from "@tauri-apps/api";
 import { MainContainer, ChatContainer, MessageList, Message, MessageInput, MessageModel } from '@chatscope/chat-ui-kit-react';
 import { open, ask, OpenDialogOptions } from '@tauri-apps/api/dialog';
 import Terminal from "./components/Terminal";
+import { useError } from "./hooks/useError";
 
 // import { LexRuntimeV2 } from 'aws-sdk'
 // import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
@@ -23,16 +25,13 @@ const launchRatios = [
 const test: MessageModel[] = [{ direction: "incoming", message: "Hello, how can I help you today?", position: "normal" }]
 
 
-const testLines = [
-  "Hello, how can I help you today?",
-  "I'm doing well, thanks for asking!",
-  "I'm doing well, thanks for asking!",
-  "I'm doing well, thanks for asking!",
-];
 
 
 const MAX_SECONDS_PERDAY = 5;
 function App() {
+  const setToast = useToast();
+  const setError = useError();
+  const [lines, setLines] = useState<string[]>([]);
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   // const [location, setLocation] = useState("");
@@ -127,6 +126,14 @@ function App() {
     console.log({ res });
     setRunning(false);
   }
+  
+  function printToTerminal(printLines: string) {
+    setLines((prev) => {
+      const tempLines = [...prev, printLines];
+      return tempLines;
+    });
+  }
+
 
   async function runGource() {
 
@@ -146,9 +153,16 @@ function App() {
       args = args.concat([`-o`, `${ppmLoc}`]);
     }
 
-    const res = await invoke('run_gource', { args })
-    console.log({ res, currentRation, args });
-    setRunning(true);
+    printToTerminal(`gource ${args.join(' ')}`)
+    try {
+      const res = await invoke('run_gource', { args })
+      console.log({ res, currentRation, args });
+      setRunning(true);
+    }
+    catch (e) {
+      setError(e as string)
+      setRunning(false);
+    }
   }
 
   // https://github.com/tauri-apps/tauri/discussions/5194
@@ -177,52 +191,53 @@ function App() {
   }, []);
 
   return (
-    <>
-      <div className="flex bg-[#3695ab] flex-col h-[100vh] align-middle w-full p-3 items-center justify-center ">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            runGource();
-          }}
-          className="flex flex-row justify-center h-1/2 flex-1"
-        >
-          <div className="flex flex-col font-link mr-6 bg-slate-600 p-6 rounded-lg">
-            <Dropdown
-              values={launchRatios}
-              name="ratio"
-              title="Aspect ratio to launch at"
-              onChange={(e) => {
-                console.log({ e });
-                setLauchRatio(e.target.selectedIndex)
-              }}
-            />
-            <div className="mt-6">
-              <label className="block mb-2 text-sm font-medium">Seconds per Day</label>
-              <input
-                id="default-range"
-                type="range"
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                value={secondsPerDay}
-                min={0}
-                max={100}
-                onChange={(e) => setSeconds(parseInt(e.target.value))}
+    <div className="flex bg-[#3695ab] flex-col h-screen w-screen p-3 ">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          runGource();
+        }}
+        className="flex flex-col items-center justify-center h-1/2 flex-1"
+      >
+        <div className="flex flex-col">
+          <div className="flex flex-row">
+            <div className="flex flex-col w-1/2 min-h-[calc(100vh-25vh)] font-link mr-6 bg-slate-600 p-6 rounded-lg">
+              <Dropdown
+                values={launchRatios}
+                name="ratio"
+                title="Aspect ratio to launch at"
+                onChange={(e) => {
+                  console.log({ e });
+                  setLauchRatio(e.target.selectedIndex)
+                }}
               />
-            </div>
-            <div className="w-full flex justify-between text-xs px-2">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
-            <div className="w-full flex justify-between text-xs px-2">
-              <span>0</span>
-              <span>{MAX_SECONDS_PERDAY}</span>
-            </div>
+              <div className="mt-6">
+                <label className="block mb-2 text-sm font-medium">Seconds per Day</label>
+                <input
+                  id="default-range"
+                  type="range"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                  value={secondsPerDay}
+                  min={0}
+                  max={100}
+                  onChange={(e) => setSeconds(parseInt(e.target.value))}
+                />
+              </div>
+              <div className="w-full flex justify-between text-xs px-2">
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+                <span>|</span>
+              </div>
+              <div className="w-full flex justify-between text-xs px-2">
+                <span>0</span>
+                <span>{MAX_SECONDS_PERDAY}</span>
+              </div>
 
-            <div className="mt-6">
-              Viewport
-              {/* <div className="flex items-center my-4">
+              <div className="mt-6">
+                Viewport
+                {/* <div className="flex items-center my-4">
                 <input id="default-radio-1" type="radio" value="" name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                 <label className="ml-2 text-sm font-medium">Fullscreen</label>
               </div>
@@ -232,38 +247,53 @@ function App() {
               </div> */}
 
 
-              <button
-                className="btn btn-primary mt-6"
-                onClick={(e) => {
-                  e.preventDefault();
-                  outputVideoHandler();
-                }}
-              >
-                Hey man
-              </button>
+                {/* <button
+              className="btn btn-primary mt-6"
+              onClick={(e) => {
+                e.preventDefault();
+                outputVideoHandler();
+              }}
+            >
+              Hey man
+            </button> */}
 
 
-              <div className="mt-6">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Skip Stagnating days</span>
-                  <input checked={skipStagnate}
-                    onChange={() => setSkipStagnate(!skipStagnate)}
-                    type="checkbox" className="checkbox" />
-                </label>
+                <div className="mt-6">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Skip stagnating days</span>
+                    <input checked={skipStagnate}
+                      onChange={() => setSkipStagnate(!skipStagnate)}
+                      type="checkbox" className="checkbox" />
+                  </label>
+                </div>
+
+                <div className="mt-6">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Output video</span>
+                    <input type="checkbox" checked={outputVideo}
+                      onChange={() => setOutputVideo(!outputVideo)}
+                      className="checkbox" />
+                  </label>
+                </div>
               </div>
+              {outputVideo &&
+                <div className="mt-6">
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Placeholder 1</span>
+                    <input type="checkbox" className="checkbox" />
+                  </label>
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Placeholder 2</span>
+                    <input type="checkbox" className="checkbox" />
+                  </label>
+                  <label className="label cursor-pointer">
+                    <span className="label-text">Placeholder 3</span>
+                    <input type="checkbox" className="checkbox" />
+                  </label>
+                </div>
+              }
 
-              <div className="mt-6">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Output video</span>
-                  <input type="checkbox" checked={outputVideo}
-                    onChange={() => setOutputVideo(!outputVideo)}
-                    className="checkbox" />
-                </label>
-              </div>
-            </div>
-
-
-            {/* <div className="flex flex-col my-6">
+              {/* <div className="flex flex-col my-6">
               <p className="text-left mb-3">Date Range</p>
               <div className="flex flex-row">
                 <input placeholder="Start date"
@@ -274,40 +304,50 @@ function App() {
                 ></input>
               </div>
             </div> */}
-          </div>
-
-
-          <div className="items-center flex flex-col font-link justify-center bg-slate-600 p-6 rounded-lg">
-            <div className="flex flex-row items-center">
-
-              <input placeholder="Enter repo location..."
-                className="input input-bordered max-w-xs rounded-lg m-5"
-                onChange={e => { setLocation(e.target.value) }}
-                value={location}
-              ></input>
-
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  openDialog();
-                }}
-
-                className="btn font-link"
-              >OPEN</button>
 
             </div>
 
-            <button
-              className="btn font-link m-16 p-12"
-              type="submit"
-            >Gource</button>
-            <span className="badge">{running ? 'Gource is running' : 'Gource is not Running'}</span>
-            <Terminal lines={testLines} />
-          </div>
-        </form>
 
-      </div >
-    </>
+            <div className="items-center flex flex-col font-link justify-center bg-slate-600 p-6 rounded-lg">
+              <div className="flex flex-row items-center">
+
+                <input placeholder="Enter repo location..."
+                  className="input input-bordered max-w-xs rounded-lg m-5"
+                  onChange={e => { setLocation(e.target.value) }}
+                  value={location}
+                ></input>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    openDialog();
+                  }}
+
+                  className="btn font-link"
+                >OPEN</button>
+
+              </div>
+
+              <button
+                className="btn font-link m-16 p-12"
+                type="submit"
+              >Gource</button>
+              <span className="badge">{running ? 'Gource is running' : 'Gource is not running'}</span>
+              {running && 
+                <button
+                  className="btn font-link"
+                  onClick={killGource}
+                >Kill</button>
+              }
+            </div>
+          </div>
+
+          <Terminal lines={lines} />
+        </div>
+
+      </form>
+
+    </div >
   );
 }
 

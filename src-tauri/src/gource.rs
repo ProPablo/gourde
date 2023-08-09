@@ -10,9 +10,7 @@ pub trait Gource {
 
 
 #[cfg(not(windows))]
-struct GourceLinux {}
-
-
+pub struct GourceLinux {}
 
 #[cfg(windows)]
 pub mod windows;

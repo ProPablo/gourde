@@ -34,8 +34,8 @@ export default forwardRef(function Dropdown(props: IProps, ref: any) {
       >
 
         <option disabled selected>{props.title ? `Pick an option for ${props.title}` : `Pick an option`} </option>
-        {props.values.map(e => (
-          <option>{e}</option>
+        {props.values.map((e, i) => (
+          <option key={i}>{e}</option>
         ))}
 
       </select>
