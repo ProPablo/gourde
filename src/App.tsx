@@ -357,7 +357,10 @@ function App() {
               {running && 
                 <button
                   className="btn font-link"
-                  onClick={killGource}
+                  onClick={(e)=> {
+                    e.preventDefault()
+                    killGource();
+                  }}
                 >Kill</button>
               }
             </div>
