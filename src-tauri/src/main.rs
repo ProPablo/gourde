@@ -19,21 +19,9 @@ struct GourceContainer {
     child: ChildContainer,
 }
 
-fn kill_old_child(containter: &GourceContainer) -> Result<bool, String> {
-    // let mut maybe_child = containter.child.lock();
-    // match &mut maybe_child {
-    //     Ok(maybe_child) =>
-    //     match maybe_child.take() {
-    //         Some( old_thread) => {
-    //             println!("Stopping old child");
-    //             old_thread.kill().map_err(|e| e.to_string()).map(|_| true)
-    //         }
-    //         None => Ok(false),
-    //     },
-    //     Err(e) => Err("Failed to lock mutex".to_string()),
-    // }
+fn kill_old_child(containter: &ChildContainer) -> Result<bool, String> {
 
-    match containter.child.lock().unwrap().take() {
+    match containter.lock().unwrap().take() {
         Some(child) => {
             println!("Stopping old child");
             child.kill().map_err(|e| e.to_string()).map(|_| true)
@@ -48,7 +36,7 @@ fn kill_old_child(containter: &GourceContainer) -> Result<bool, String> {
 fn kill_child(state: State<'_, GourceContainer>) -> Result<bool, String> {
     // State.Inner gives access to the struct inside the state as a reference in case
     // Be better if u just passed around teh state (arc) clone
-    kill_old_child(&mut state.inner())
+    kill_old_child(&state.inner().child)
 }
 
 enum FolderResult {
@@ -89,7 +77,7 @@ async fn run_gource<'a, R: Runtime>(
 
     {
         let inner = state.inner();
-        if let Err(e) = kill_old_child(inner) {
+        if let Err(e) = kill_old_child(&inner.child) {
             return Err(e.to_string());
         }
     }
@@ -163,7 +151,7 @@ fn main() {
                 tauri::WindowEvent::Destroyed => {
                     println!("Window is closing");
                     let thing: State<'_, GourceContainer> = event.window().state();
-                    kill_old_child(&thing.inner()).unwrap();
+                    kill_old_child(&thing.inner().child).unwrap();
                 }
                 _ => {}
             }
