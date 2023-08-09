@@ -2,8 +2,6 @@
 An GUI applcation to launch gource, alternatives either dont do a rendering that you can examine or do a timestep animation
 
 ## TODO
-
-
 - Generate gource bin for linux
 
 - FFMPEG to make the videos (windows just include the binary) 
@@ -12,13 +10,11 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
     - Handle showing user console output
 
 
-- link the gource source as a submodule instead 
 - linux/ macos record videos using preinstalled ffmpeg or tell user to install ffpmeg
 - useError and handle invoke errors 
 - styles
 
 
-- Git-rs rust crate to temp download and host the repos, possibly logins
 
 
 
@@ -37,3 +33,7 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
 - fix launching program on wrong monitor 
     - seems too hard without going into platform specifc unsafe api calls
     - if interested check out C:\Users\anhad\.cargo\registry\src\github.com-1ecc6299db9ec823\tao-0.16.1\src\platform_impl\windows\window.rs, 1108
+
+
+- link the gource source as a submodule instead 
+- Git-rs rust crate to temp download and host the repos, possibly logins
