@@ -2,10 +2,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{
-    os::windows::prelude::AsHandle,
     process::{Child, Command},
     sync::{Arc, Mutex},
 };
+mod gource;
 
 use anyhow::{bail, Context, Result};
 use tauri::api::process::{Command as TauriCommand, CommandChild};
@@ -13,11 +13,12 @@ use tauri::{AppHandle, Config, Manager, Runtime, State};
 // SharedChild is very much needed becuase even tauri uses it, see https://crates.io/crates/shared_child
 use shared_child::SharedChild;
 
-type ChildContainer = Mutex<Option<Arc<SharedChild>>>;
 
+type ChildContainer = Mutex<Option<Arc<SharedChild>>>;
 struct GourceContainer {
     child: ChildContainer,
 }
+
 
 fn kill_old_child(containter: &ChildContainer) -> Result<bool, String> {
 
@@ -120,7 +121,15 @@ async fn run_gource<'a, R: Runtime>(
             *maybe_child = Some(shared_child);
         }
         Err(e) => {
-            return Err(e.to_string());
+            let error_string = format!("Failed to run gource: {}", e);
+
+            // This returns an anyhow Error which is not the same as Err(string)
+            // return anyhow::anyhow!( error_string );
+
+            //This returns Err(anyhow::Error) which is not the same as Err(string)
+            // return Err(anyhow::anyhow!( error_string ));
+
+            return Err(anyhow::anyhow!( error_string ).to_string());
         }
     }
     Ok(())
