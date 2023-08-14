@@ -1,0 +1,2 @@
+src-tauri/bin/ffmpeg-x86_64-pc-windows-msvc.exe filter=lfs diff=lfs merge=lfs -text
+src-tauri/bin/gource-aarch64-apple-darwin filter=lfs diff=lfs merge=lfs -text
