@@ -16,8 +16,6 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
 
 
 
-
-
 ## Done
 - Easy kill child funtion usage
 - Fix wrong unlaunchable directory (no git folder)

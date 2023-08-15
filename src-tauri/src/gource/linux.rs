@@ -1,11 +1,11 @@
-use std::sync::Mutex;
+use std::{sync::Mutex, time::Duration};
 use tauri::api::process::{Command as TauriCommand, CommandChild};
 
 use super::Gource;
 use anyhow::{bail, Context, Result};
 
 pub struct GourceLinux {
-    child: Mutex<Option<CommandChild>>,
+    pub child: Mutex<Option<CommandChild>>,
 }
 impl GourceLinux {
     pub fn new() -> Self {
@@ -26,8 +26,19 @@ impl Gource for GourceLinux {
             .args(&args)
             .spawn();
 
-        println!("{:?}", res);
-        let command_child: tauri::api::process::CommandChild = res.unwrap().1;
+        println!("Sidecar result: {:?}", res);
+        let res = res.unwrap();
+        let command_child: tauri::api::process::CommandChild = res.1;
+        let mut recv = res.0;
+        // For debug
+        // std::thread::spawn(move|| {
+        //     loop {
+        //         let thing = recv.blocking_recv();
+        //         dbg!(thing);
+        //         std::thread::sleep(Duration::from_millis(1000));
+        //     }
+        // });
+
         // Using derefence to mut reference to assign to it
         let mut child = self.child.lock().unwrap();
         *child = Some(command_child);
