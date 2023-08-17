@@ -34,6 +34,22 @@ const test_strings = [
   "I'm sorry, I didn't understand that.",
 ]
 
+enum State {
+  IDLE,
+  RUNNING,
+  GETTING_VIDEO
+}
+
+function state2str(state: State) {
+  switch (state) {
+    case State.IDLE:
+      return "IDLE"
+    case State.RUNNING:
+      return "RUNNING"
+    case State.GETTING_VIDEO:
+      return "GETTING_VIDEO"
+  }
+}
 
 const MAX_SECONDS_PERDAY = 5;
 function App() {
@@ -41,9 +57,7 @@ function App() {
   const setError = useError();
   // const [lines, setLines] = useState<string[]>([]);
   const [lines, setLines] = useState<string[]>(test_strings);
-  const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
-  // const [location, setLocation] = useState("");
   // const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
   const [location, setLocation] = useAtom(lastFileLocAtom);
   const [skipStagnate, setSkipStagnate] = useState(true);
@@ -51,14 +65,9 @@ function App() {
   // const [messages, setMessages] = useState<MessageModel[]>([]);
   const [secondsPerDay, setSeconds] = useState<number>(50);
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
-  const [ffmpegOutput, setFFmpegOutput] = useState<string[]>([]);
   const [running, setRunning] = useState<boolean>(false);
-  const [lastFileLoc, setLastFileLoc] = useAtom(lastFileLocAtom);
+  const [runningFFmpeg, setRunningFFmpeg] = useState<boolean>(false);
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
-  }
 
   async function openDialog() {
     const options: OpenDialogOptions = {
@@ -89,6 +98,7 @@ function App() {
   // Handling this client side, we could listen to the event in an actor thread on rust side
   async function outputVideoHandler() {
     console.log("outputVideoHandler");
+    setRunningFFmpeg(true);
 
     let type = await os.type();
     let outputLoc = await getOutputLoc();
@@ -121,26 +131,38 @@ function App() {
     console.log({ args });
 
 
-    let res;
+    let command;
     if (type == "Windows_NT") {
-      const command = Command.sidecar("bin/ffmpeg",);
+      command = Command.sidecar("bin/ffmpeg", args);
       console.log({ command });
-      command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
-      command.stderr.on('data', line => console.log(`binary command stderr: "${line}"`));
-      // res = await command.execute();
-      res = await command.spawn();
     } else {
-      const command = new Command("ffmpeg", args);
-      res = await command.execute();
+      command = new Command("ffmpeg", args);
+
+      // command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
+      // command.stderr.on('data', line => console.log(`binary command stderr: "${line}"`));
     }
+
+    command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
+    command.stderr.on('data', line => {
+      printToTerminal(line);
+      console.log(`binary command stderr: "${line}"`)
+
+    });
+
+    //Wait for the command to finish 
+    let res = await command.execute();
     setOutputVideo(false);
+    setRunningFFmpeg(false);
     console.log({ res });
     printToTerminal(`ffmpeg ${args.join(' ')}`);
     // TODO: handle stderr from res and try catch
 
+    console.log("help");
 
-    // await removeFile(ppmLoc);
-    // await invoke('show_in_folder', { path: outputLoc });
+
+
+    await removeFile(ppmLoc);
+    await invoke('show_in_folder', { path: outputLoc });
   }
 
   async function killGource() {
@@ -206,9 +228,6 @@ function App() {
     }
 
   }, [outputVideo]);
-
-
-
 
 
   // https://github.com/tauri-apps/tauri/discussions/5194
@@ -286,15 +305,15 @@ function App() {
               </div> */}
 
 
-                <button
-              className="btn btn-primary mt-6"
-              onClick={(e) => {
-                e.preventDefault();
-                outputVideoHandler();
-              }}
-            >
-              Hey man
-            </button>
+                {/* <button
+                  className="btn btn-primary mt-6"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    outputVideoHandler();
+                  }}
+                >
+                  Hey man
+                </button> */}
 
 
                 <div className="mt-6">
@@ -372,6 +391,8 @@ function App() {
                 type="submit"
               >Gource</button>
               <span className="badge">{running ? 'Gource is running' : 'Gource is not running'}</span>
+              <span className="badge">{runningFFmpeg ? 'ffmpeg is running' : 'ffmpeg is not running'}</span>
+
               {running &&
                 <button
                   className="btn font-link"

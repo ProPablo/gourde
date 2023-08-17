@@ -1,5 +1,6 @@
 import { useContext, memo, FunctionComponent, ReactNode, createContext, useCallback, useEffect, useState } from "react";
 import dismissIcon from '../assets/dismiss.svg';
+import React from "react";
 
 export function useError() {
   const setError = useContext(ErrorContext);
@@ -17,7 +18,7 @@ export const ErrorContext = createContext<ErrorContextValue>({} as ErrorContextV
 
 const ERROR_TOAST_DELAY = 10_000;
 
-let GlobalErrorProvider: FunctionComponent<Props> = ({ children }) => {
+let GlobalErrorProvider: FunctionComponent<Props> = React.memo(({ children }) => {
 
   const [error, setError] = useState<string[] | null>(null);
   const [remainingError, setRemainingError] = useState<string[]>(["Sample Error:"]);
@@ -74,7 +75,8 @@ let GlobalErrorProvider: FunctionComponent<Props> = ({ children }) => {
       </div>
     </ErrorContext.Provider >
   );
-};
+});
 
-GlobalErrorProvider =  memo(GlobalErrorProvider);
-export { GlobalErrorProvider}
+// putting the memo here breaks vite for some reason, but regular react.memo up above is fine
+// GlobalErrorProvider =  memo(GlobalErrorProvider);
+export { GlobalErrorProvider }

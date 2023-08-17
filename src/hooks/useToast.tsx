@@ -1,3 +1,4 @@
+import React from "react";
 import { FunctionComponent, ReactNode, createContext, memo, useContext, useEffect, useState } from "react";
 
 export function useToast() {
@@ -14,7 +15,7 @@ export const ToastContext = createContext<ToastContextValue>({} as ToastContextV
 
 const TOAST_DELAY = 3000;
 
-let GlobalToastProvider: FunctionComponent<Props> = ({ children }) => {
+let GlobalToastProvider: FunctionComponent<Props> = React.memo(({ children }) => {
 
     const [toast, setToast] = useState<string | null>(null);
     const [remainingToast, setRemainingToast] = useState("");
@@ -63,8 +64,8 @@ let GlobalToastProvider: FunctionComponent<Props> = ({ children }) => {
             </div>
         </ToastContext.Provider >
     );
-};
+});
 
 
-GlobalToastProvider = memo(GlobalToastProvider);
+// GlobalToastProvider = memo(GlobalToastProvider);
 export { GlobalToastProvider }
