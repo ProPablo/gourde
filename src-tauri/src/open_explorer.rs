@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 #[cfg(target_os = "linux")]
-use std::{fs::metadata, path::PathBuf}; // dep: fork = "0.1"
+use std::{fs::metadata}; // dep: fork = "0.1"
 
 #[tauri::command]
 pub fn show_in_folder(path: String){

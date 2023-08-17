@@ -1,5 +1,8 @@
 use std::{sync::Mutex, time::Duration};
-use tauri::api::process::{Command as TauriCommand, CommandChild};
+use tauri::{
+    api::process::{Command as TauriCommand, CommandChild, CommandEvent},
+    Manager,
+};
 
 use super::Gource;
 use anyhow::{bail, Context, Result};
@@ -29,15 +32,21 @@ impl Gource for GourceLinux {
         println!("Sidecar result: {:?}", res);
         let res = res.unwrap();
         let command_child: tauri::api::process::CommandChild = res.1;
-        let mut recv = res.0;
-        // For debug
-        // std::thread::spawn(move|| {
-        //     loop {
-        //         let thing = recv.blocking_recv();
-        //         dbg!(thing);
-        //         std::thread::sleep(Duration::from_millis(1000));
-        //     }
-        // });
+        let mut rx = res.0;
+        tauri::async_runtime::spawn(async move {
+            while let Some(event) = rx.recv().await {
+                match event {
+                    CommandEvent::Stderr(line) => println!("Gource error: {line}"),
+                    CommandEvent::Stdout(line) => println!("Gource: {line}"),
+                    CommandEvent::Error(_) => todo!(),
+                    CommandEvent::Terminated(_) => {
+                        app.emit_all("gource-finished", ())
+                            .expect("failed to emit event");
+                    }
+                    _ => todo!(),
+                }
+            }
+        });
 
         // Using derefence to mut reference to assign to it
         let mut child = self.child.lock().unwrap();
