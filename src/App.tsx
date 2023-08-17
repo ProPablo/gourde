@@ -14,6 +14,8 @@ import { MainContainer, ChatContainer, MessageList, Message, MessageInput, Messa
 import { open, ask, OpenDialogOptions } from '@tauri-apps/api/dialog';
 import Terminal from "./components/Terminal";
 import { useError } from "./hooks/useError";
+import { useAtom } from "jotai";
+import { lastFileLocAtom } from "./store";
 
 // import { LexRuntimeV2 } from 'aws-sdk'
 // import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
@@ -27,6 +29,7 @@ const test: MessageModel[] = [{ direction: "incoming", message: "Hello, how can 
 
 
 
+
 const MAX_SECONDS_PERDAY = 5;
 function App() {
   const setToast = useToast();
@@ -36,7 +39,7 @@ function App() {
   const [name, setName] = useState("");
   // const [location, setLocation] = useState("");
   // const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
-  const [location, setLocation] = useState(String.raw`C:\repos\rm_dashboard`);
+  const [location, setLocation] = useAtom(lastFileLocAtom);
   const [skipStagnate, setSkipStagnate] = useState(true);
   const [launchRatio, setLauchRatio] = useState(1);
   // const [messages, setMessages] = useState<MessageModel[]>([]);
@@ -45,6 +48,7 @@ function App() {
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
   const [ffmpegOutput, setFFmpegOutput] = useState<string[]>([]);
   const [running, setRunning] = useState<boolean>(false);
+  const [lastFileLoc, setLastFileLoc] = useAtom(lastFileLocAtom);
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -130,7 +134,7 @@ function App() {
     console.log({ res });
     setRunning(false);
   }
-  
+
   function printToTerminal(printLines: string) {
     setLines((prev) => {
       const tempLines = [...prev, printLines];
@@ -292,7 +296,7 @@ function App() {
                   <label className="label cursor-pointer">
                     <span className="label-text">Output video</span>
                     <input type="checkbox" checked={outputVideo}
-                     onChange={() => setOutputVideo((prev) => !prev)}
+                      onChange={() => setOutputVideo((prev) => !prev)}
                       className="checkbox" />
                   </label>
                 </div>
@@ -335,7 +339,7 @@ function App() {
                 <input placeholder="Enter repo location..."
                   className="input input-bordered max-w-xs rounded-lg m-5"
                   onChange={e => { setLocation(e.target.value) }}
-                  value={location}
+                  value={location ?? undefined}
                 ></input>
 
                 <button
@@ -354,10 +358,10 @@ function App() {
                 type="submit"
               >Gource</button>
               <span className="badge">{running ? 'Gource is running' : 'Gource is not running'}</span>
-              {running && 
+              {running &&
                 <button
                   className="btn font-link"
-                  onClick={(e)=> {
+                  onClick={(e) => {
                     e.preventDefault()
                     killGource();
                   }}
