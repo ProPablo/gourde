@@ -6,6 +6,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 mod gource;
+mod open_explorer;
 
 use anyhow::{bail, Context, Result};
 use tauri::api::process::{Command as TauriCommand, CommandChild};
@@ -65,7 +66,7 @@ async fn run_gource<'a, R: Runtime>(
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![run_gource, kill_child])
+        .invoke_handler(tauri::generate_handler![run_gource, kill_child, open_explorer::show_in_folder])
         .manage(GourceContainer {
             // child: Arc::new(Mutex::new(None)),
             child: Mutex::new(None),

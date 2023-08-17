@@ -28,13 +28,19 @@ const test: MessageModel[] = [{ direction: "incoming", message: "Hello, how can 
 
 
 
+const test_strings = [
+  "Hello, how can I help you today?",
+  "I'm sorry, I didn't understand that.",
+  "I'm sorry, I didn't understand that.",
+]
 
 
 const MAX_SECONDS_PERDAY = 5;
 function App() {
   const setToast = useToast();
   const setError = useError();
-  const [lines, setLines] = useState<string[]>([]);
+  // const [lines, setLines] = useState<string[]>([]);
+  const [lines, setLines] = useState<string[]>(test_strings);
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   // const [location, setLocation] = useState("");
@@ -43,7 +49,6 @@ function App() {
   const [skipStagnate, setSkipStagnate] = useState(true);
   const [launchRatio, setLauchRatio] = useState(1);
   // const [messages, setMessages] = useState<MessageModel[]>([]);
-  const [messages, setMessages] = useState<MessageModel[]>(test);
   const [secondsPerDay, setSeconds] = useState<number>(50);
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
   const [ffmpegOutput, setFFmpegOutput] = useState<string[]>([]);
@@ -88,6 +93,7 @@ function App() {
     let type = await os.type();
     let outputLoc = await getOutputLoc();
     let ppmLoc = await getppmLoc();
+    const appDir = await os.tempdir();
     let args = [
       "-y",
       "-r",
@@ -118,15 +124,23 @@ function App() {
     let res;
     if (type == "Windows_NT") {
       const command = Command.sidecar("bin/ffmpeg",);
-      res = await command.execute();
+      console.log({ command });
+      command.stdout.on('data', line => console.log(`binarycommand stdout: "${line}"`));
+      command.stderr.on('data', line => console.log(`binary command stderr: "${line}"`));
+      // res = await command.execute();
+      res = await command.spawn();
     } else {
       const command = new Command("ffmpeg", args);
       res = await command.execute();
     }
     setOutputVideo(false);
     console.log({ res });
-    await removeFile(ppmLoc);
+    printToTerminal(`ffmpeg ${args.join(' ')}`);
+    // TODO: handle stderr from res and try catch
 
+
+    // await removeFile(ppmLoc);
+    // await invoke('show_in_folder', { path: outputLoc });
   }
 
   async function killGource() {
@@ -272,7 +286,7 @@ function App() {
               </div> */}
 
 
-                {/* <button
+                <button
               className="btn btn-primary mt-6"
               onClick={(e) => {
                 e.preventDefault();
@@ -280,7 +294,7 @@ function App() {
               }}
             >
               Hey man
-            </button> */}
+            </button>
 
 
                 <div className="mt-6">

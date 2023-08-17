@@ -44,7 +44,6 @@ impl Gource for GourceWindows {
                 // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
                 let shared_child = Arc::new(SharedChild::new(output).unwrap());
                 let cloned_child = shared_child.clone();
-                // let app_clone = app.clone();
 
                 let t = std::thread::spawn(move || {
                     let res = cloned_child.wait();

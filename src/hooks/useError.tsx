@@ -43,7 +43,7 @@ let GlobalErrorProvider: FunctionComponent<Props> = ({ children }) => {
         id="toast-default"
         role="alert"
         className={`flex w-2/5 break-all transition-opacity duration-300 fixed bottom-0 left-0 items-center p-4 m-6 text-gray-500 bg-[#EB4C63] rounded-lg 
-        ${error ? 'opacity-100' : 'opacity-0'}`}>
+        ${error ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
         <div className="flex flex-col text-sm font-normal text-white">
           {remainingError &&

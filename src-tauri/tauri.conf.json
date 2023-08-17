@@ -29,7 +29,11 @@
       },
       "fs": {
         "all": false,
-        "removeFile": true
+        "removeFile": true,
+        "scope": [
+          "$TEMP/gource.ppm",
+          "$TEMP/gource.x264.avi"
+        ]
       },
 
       "shell": {
