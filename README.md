@@ -2,19 +2,8 @@
 An GUI applcation to launch gource, alternatives either dont do a rendering that you can examine or do a timestep animation
 
 ## TODO
-- Generate gource bin for linux
-
-- FFMPEG to make the videos (windows just include the binary) 
-    - ~~Link and use ffmpeg~~
-    - (figure out how to use gitlfs)
-    - Handle showing user console output
-
-
-- linux/ macos record videos using preinstalled ffmpeg or tell user to install ffpmeg
 - useError and handle invoke errors 
 - styles
-
-
 
 ## Done
 - Easy kill child funtion usage
@@ -24,6 +13,14 @@ An GUI applcation to launch gource, alternatives either dont do a rendering that
     - These mods are separate for windows and linux 
 
 - Setup for linux / macos test
+
+- Generate gource bin for linux
+- linux/ macos record videos using preinstalled ffmpeg or tell user to install ffpmeg
+
+- FFMPEG to make the videos (windows just include the binary) 
+    - ~~Link and use ffmpeg~~
+    - (figure out how to use gitlfs)
+    - Handle showing user console output
 
 - Lower scope for fs delete to only temp stuff
 
