@@ -1,5 +1,5 @@
 # Gourde
-An GUI applcation to launch gource, alternatives either dont do a rendering that you can examine or do a timestep animation
+An GUI applcation to launch gource on a git repo and record the output as a video
 
 ## TODO
 - useError and handle invoke errors 
