@@ -24,14 +24,8 @@ const launchRatios = [
   "800x600",
   "1280x720",
 ]
-const test: MessageModel[] = [{ direction: "incoming", message: "Hello, how can I help you today?", position: "normal" }]
-
-
-
-const test_strings = [
-  "Hello, how can I help you today?",
-  "I'm sorry, I didn't understand that.",
-  "I'm sorry, I didn't understand that.",
+const init_strings = [
+  "This is the console!"
 ]
 
 enum State {
@@ -55,8 +49,7 @@ const MAX_SECONDS_PERDAY = 5;
 function App() {
   const setToast = useToast();
   const setError = useError();
-  // const [lines, setLines] = useState<string[]>([]);
-  const [lines, setLines] = useState<string[]>(test_strings);
+  const [lines, setLines] = useState<string[]>(init_strings);
   const [name, setName] = useState("");
   // const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
   const [location, setLocation] = useAtom(lastFileLocAtom);
@@ -249,7 +242,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex bg-[#3695ab] flex-col h-screen w-screen p-3 ">
+    <div className="flex bg-[#3695ab] flex-col p-3 ">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -257,45 +250,45 @@ function App() {
         }}
         className="flex flex-col items-center justify-center h-1/2 flex-1"
       >
-        <div className="flex flex-col">
-          <div className="flex flex-row">
-            <div className="flex flex-col w-1/2 min-h-[calc(100vh-25vh)] font-link mr-6 bg-slate-600 p-6 rounded-lg">
-              <Dropdown
-                values={launchRatios}
-                name="ratio"
-                title="Aspect ratio to launch at"
-                onChange={(e) => {
-                  console.log({ e });
-                  setLauchRatio(e.target.selectedIndex)
-                }}
-              />
-              <div className="mt-6">
-                <label className="block mb-2 text-sm font-medium">Seconds per Day</label>
-                <input
-                  id="default-range"
-                  type="range"
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                  value={secondsPerDay}
-                  min={0}
-                  max={100}
-                  onChange={(e) => setSeconds(parseInt(e.target.value))}
-                />
-              </div>
-              <div className="w-full flex justify-between text-xs px-2">
-                <span>|</span>
-                <span>|</span>
-                <span>|</span>
-                <span>|</span>
-                <span>|</span>
-              </div>
-              <div className="w-full flex justify-between text-xs px-2">
-                <span>0</span>
-                <span>{MAX_SECONDS_PERDAY}</span>
-              </div>
 
-              <div className="mt-6">
-                Viewport
-                {/* <div className="flex items-center my-4">
+        <div className="flex flex-row w-full">
+          <div className="flex flex-col w-1/2 lg:w-2/3 min-h-[calc(100vh-25vh)] font-link mr-6 bg-slate-600 p-6 rounded-lg">
+            <Dropdown
+              values={launchRatios}
+              name="ratio"
+              title="Aspect ratio to launch at"
+              onChange={(e) => {
+                console.log({ e });
+                setLauchRatio(e.target.selectedIndex)
+              }}
+            />
+            <div className="mt-6">
+              <label className="block mb-2 text-sm font-medium">Seconds per Day</label>
+              <input
+                id="default-range"
+                type="range"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                value={secondsPerDay}
+                min={0}
+                max={100}
+                onChange={(e) => setSeconds(parseInt(e.target.value))}
+              />
+            </div>
+            <div className="flex justify-between text-xs px-2">
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+            </div>
+            <div className="flex justify-between text-xs px-2">
+              <span>0</span>
+              <span>{MAX_SECONDS_PERDAY}</span>
+            </div>
+
+            <div className="mt-6">
+              Viewport
+              {/* <div className="flex items-center my-4">
                 <input id="default-radio-1" type="radio" value="" name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                 <label className="ml-2 text-sm font-medium">Fullscreen</label>
               </div>
@@ -305,7 +298,7 @@ function App() {
               </div> */}
 
 
-                {/* <button
+              {/* <button
                   className="btn btn-primary mt-6"
                   onClick={(e) => {
                     e.preventDefault();
@@ -316,42 +309,42 @@ function App() {
                 </button> */}
 
 
-                <div className="mt-6">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Skip stagnating days</span>
-                    <input checked={skipStagnate}
-                      onChange={() => setSkipStagnate(!skipStagnate)}
-                      type="checkbox" className="checkbox" />
-                  </label>
-                </div>
-
-                <div className="mt-6">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Output video</span>
-                    <input type="checkbox" checked={outputVideo}
-                      onChange={() => setOutputVideo((prev) => !prev)}
-                      className="checkbox" />
-                  </label>
-                </div>
+              <div className="mt-6">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Skip stagnating days</span>
+                  <input checked={skipStagnate}
+                    onChange={() => setSkipStagnate(!skipStagnate)}
+                    type="checkbox" className="checkbox" />
+                </label>
               </div>
-              {outputVideo &&
-                <div className="mt-6">
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Placeholder 1</span>
-                    <input type="checkbox" className="checkbox" />
-                  </label>
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Placeholder 2</span>
-                    <input type="checkbox" className="checkbox" />
-                  </label>
-                  <label className="label cursor-pointer">
-                    <span className="label-text">Placeholder 3</span>
-                    <input type="checkbox" className="checkbox" />
-                  </label>
-                </div>
-              }
 
-              {/* <div className="flex flex-col my-6">
+              <div className="mt-6">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Output video</span>
+                  <input type="checkbox" checked={outputVideo}
+                    onChange={() => setOutputVideo((prev) => !prev)}
+                    className="checkbox" />
+                </label>
+              </div>
+            </div>
+            {outputVideo &&
+              <div className="mt-6">
+                <label className="label cursor-pointer">
+                  <span className="label-text">Placeholder 1</span>
+                  <input type="checkbox" className="checkbox" />
+                </label>
+                <label className="label cursor-pointer">
+                  <span className="label-text">Placeholder 2</span>
+                  <input type="checkbox" className="checkbox" />
+                </label>
+                <label className="label cursor-pointer">
+                  <span className="label-text">Placeholder 3</span>
+                  <input type="checkbox" className="checkbox" />
+                </label>
+              </div>
+            }
+
+            {/* <div className="flex flex-col my-6">
               <p className="text-left mb-3">Date Range</p>
               <div className="flex flex-row">
                 <input placeholder="Start date"
@@ -363,39 +356,41 @@ function App() {
               </div>
             </div> */}
 
-            </div>
+          </div>
 
 
-            <div className="items-center flex flex-col font-link justify-center bg-slate-600 p-6 rounded-lg">
-              <div className="flex flex-row items-center">
+          <div className="w-1/2 lg:w-1/3 items-center flex flex-col font-link justify-center bg-slate-600 p-6 rounded-lg">
+            <div className="flex flex-row items-center">
 
-                <input placeholder="Enter repo location..."
-                  className="input input-bordered max-w-xs rounded-lg m-5"
-                  onChange={e => { setLocation(e.target.value) }}
-                  value={location ?? undefined}
-                ></input>
-
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    openDialog();
-                  }}
-
-                  className="btn font-link"
-                >OPEN</button>
-
-              </div>
+              <input placeholder="Enter repo location..."
+                className="input input-bordered max-w-xs rounded-lg m-5"
+                onChange={e => { setLocation(e.target.value) }}
+                value={location ?? undefined}
+              ></input>
 
               <button
-                className="btn font-link m-16 p-12"
-                type="submit"
-              >Gource</button>
-              <span className="badge">{running ? 'Gource is running' : 'Gource is not running'}</span>
-              <span className="badge">{runningFFmpeg ? 'ffmpeg is running' : 'ffmpeg is not running'}</span>
+                onClick={(e) => {
+                  e.preventDefault()
+                  openDialog();
+                }}
 
+                className="btn font-link"
+              >OPEN</button>
+
+            </div>
+
+            <div className="flex flex-col gap-3 items-center">
+              <button
+                className="btn btn-lg font-link m-16 hover:scale-110 transition-scale"
+                type="submit"
+              >
+                  Gource
+              </button>
+              <span className={`${running && "badge-success"} badge p-3`}>{running ? 'Gource is running' : 'Gource is not running'}</span>
+              <span className={`${runningFFmpeg && "badge-success"} badge p-3`}>{runningFFmpeg ? 'ffmpeg is running' : 'ffmpeg is not running'}</span>
               {running &&
                 <button
-                  className="btn font-link"
+                  className="btn hover:btn-error font-link"
                   onClick={(e) => {
                     e.preventDefault()
                     killGource();
@@ -403,12 +398,15 @@ function App() {
                 >Kill</button>
               }
             </div>
-          </div>
 
-          <Terminal lines={lines} />
+          </div>
         </div>
 
+
       </form>
+      <div className="flex-grow-0 w-full my-5 bg-gray-800 rounded-lg">
+        <Terminal lines={lines} />
+      </div>
 
     </div >
   );
