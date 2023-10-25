@@ -1,0 +1,46 @@
+{
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "path": {
+        "all": true
+      },
+      "dialog": {
+        "all": true, 
+        "ask": true, 
+        "confirm": true, 
+        "message": true, 
+        "open": true, 
+        "save": true 
+      },
+
+      "shell": {
+        "all": true,
+        "scope": [
+          {
+            "name": "gource",
+            "cmd": "$RESOURCE/bin/gource/gource",
+            "args": true
+          },
+          {
+            "name": "bin/ffmpeg",
+            "args": true,
+            "sidecar": true
+          }
+        ]
+      },
+      "window": {
+        "close": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "externalBin": [
+        "bin/ffmpeg"
+      ],
+      "resources": [
+        "bin/gource/*"
+      ]
+    }
+  }
+}

@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "gourde",
-    "version": "0.0.0"
+    "version": "0.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -16,17 +16,28 @@
       "path": {
         "all": true
       },
+      "os": {
+        "all": true
+      },
+      "dialog": {
+        "all": true, 
+        "ask": true, 
+        "confirm": true, 
+        "message": true, 
+        "open": true, 
+        "save": true 
+      },
+      "fs": {
+        "all": false,
+        "removeFile": true,
+        "scope": [
+          "$TEMP/gource.ppm",
+          "$TEMP/gource.x264.avi"
+        ]
+      },
 
       "shell": {
-        "all": true,
-        "scope": [
-          {
-            "name": "gource",
-            "cmd": "$RESOURCE/bin/gource/gource",
-            "args": true
-          }
-        ]
-
+        "all": true
       },
       "window": {
         "close": true
@@ -41,12 +52,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "externalBin": [
-      ],
-      "resources": [
-        "bin/gource/*"
-      ],
-      "identifier": "com.tauri.dev",
+      "identifier": "org.kongi.dev",
       "targets": "all"
     },
     "security": {
@@ -61,7 +67,9 @@
         "resizable": true,
         "title": "gourde",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "minHeight": 800,
+        "minWidth": 600
       }
     ]
   }

@@ -13,7 +13,8 @@ dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
+# I want to keep the launch and tasks 
+# .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -24,4 +25,5 @@ dist-ssr
 *.sw?
 
 # You have to add this in yourself since its very big
-src-tauri/bin/ffmpeg-x86_64-pc-windows-msvc.exe
+# src-tauri/bin/ffmpeg-x86_64-pc-windows-msvc.exe
+*.ppm

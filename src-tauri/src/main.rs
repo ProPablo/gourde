@@ -2,92 +2,86 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{
-    process::{Child, Command},
-    sync::Mutex,
+    sync::{Mutex},
 };
+mod gource;
+mod open_explorer;
 
-use anyhow::Result;
-use tauri::{AppHandle, Config, Manager, Runtime, State};
+use anyhow::{Result};
+use tauri::{AppHandle, Manager, Runtime, State};
+// SharedChild is very much needed becuase even tauri uses it, see https://crates.io/crates/shared_child
 
-struct GourceContainer {
-    child: Mutex<Option<Child>>,
+
+use gource::{Gource, GourceContainer};
+
+// type ChildContainer = Mutex<Option<Arc<SharedChild>>>;
+// struct GourceContainer {
+//     child: ChildContainer,
+// }
+
+#[tauri::command]
+fn kill_child(state: State<'_, GourceContainer>) -> Result<bool, String> {
+    state.kill_old_child()
 }
 
-fn kill_old_child(maybe_old_child: &mut Option<Child>) -> Result<bool> {
-    match maybe_old_child.take() {
-        Some(mut old_thread) => {
-            println!("Stopping old child");
-            let res = old_thread.kill()?;
-            Ok(true)
-        }
+enum FolderResult {
+    GitRepo,
+    NotGitRepo,
+    NotFolder,
+}
 
-        None => Ok(false),
+async fn is_file_git_repo(path: &str) -> FolderResult {
+    let mut git_path = std::path::PathBuf::from(path);
+    if !git_path.is_dir() {
+        return FolderResult::NotFolder;
+    }
+    git_path.push(".git");
+    if git_path.exists() {
+        return FolderResult::GitRepo;
+    } else {
+        return FolderResult::NotGitRepo;
     }
 }
 
 #[tauri::command]
-fn kill_child(state: State<'_, GourceContainer>) {
-    let mut maybe_child = state.child.lock().unwrap();
-    kill_old_child(&mut maybe_child);
-}
-
-#[tauri::command]
-async fn run_gource<R: Runtime>(
+async fn run_gource<'a, R: Runtime>(
     app: AppHandle<R>,
     args: Vec<String>,
-    state: State<'_, GourceContainer>,
+    state: State<'a, GourceContainer>,
 ) -> Result<(), String> {
-    let mut maybe_child = state.child.lock().unwrap();
-    // TODO: catch error and send err event
-    kill_old_child(&mut maybe_child);
+    match is_file_git_repo(&args[0]).await {
+        FolderResult::GitRepo => {}
+        FolderResult::NotGitRepo => {
+            return Err("Not a git repo".to_string());
+        }
+        FolderResult::NotFolder => {
+            return Err("Not a folder".to_string());
+        }
+    }
 
-    // format!("Hello, {}! You've been greeted from Rust!", name)
-    let mut gource_path = tauri::api::path::resource_dir(app.package_info(), &app.env()).unwrap();
-    gource_path.push("bin/gource");
-    let mut gource_bin = gource_path.clone();
-    gource_bin.push("gource");
-    println!("{:?}", gource_path);
-    println!("{:?}", gource_bin);
-    let final_string = gource_bin
-        .to_str()
-        .unwrap()
-        .to_string()
-        .trim_start_matches("\\\\?\\")
-        .to_string();
-    println!("{:?}", final_string);
-
-    let output = Command::new(final_string)
-        .current_dir(gource_path)
-        .args(args)
-        // .arg("D:/rm_dashboard")
-        .spawn()
-        .expect("failed to execute process");
-    // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
-    // https://github.com/tauri-apps/tauri/discussions/3273
-    *maybe_child = Some(output);
-
-    // let res = Command::new("./gource.exe")
-    //     .current_dir(gource_path)
-    //     .args(["D:/rm_dashboard"])
-    //     .spawn();
-    // println!("{:?}", res);
-
-    // println!("status: {}", output.status);
-    // println!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-    // println!("stderr: {}", String::from_utf8_lossy(&output.stderr));
-
-    // .spawn();
-    Ok(())
-    // ("".to_string())
+    state.run_gource(app, args)
 }
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![run_gource, kill_child])
+        .invoke_handler(tauri::generate_handler![run_gource, kill_child, open_explorer::show_in_folder])
         .manage(GourceContainer {
+            // child: Arc::new(Mutex::new(None)),
             child: Mutex::new(None),
         })
-        // .on_window_event(move |event| match event)
+        // https://github.com/tauri-apps/tauri/discussions/3273
+        .on_window_event(move |event| match event.event() {
+            tauri::WindowEvent::Destroyed => {
+                println!("Window is closing");
+
+                #[cfg(windows)]
+                {
+                    let state: State<'_, GourceContainer> = event.window().state();
+                    state.kill_old_child();
+                }
+            }
+            _ => {}
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
