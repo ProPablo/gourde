@@ -13,7 +13,7 @@
           {
             "name": "ffmpeg",
             "args": true,
-            "cmd": "ffmpe"
+            "cmd": "ffmpeg"
           }
         ]
       }
