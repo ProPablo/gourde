@@ -24,6 +24,12 @@ const launchRatios = [
   "800x600",
   "1280x720",
 ]
+
+enum FfmpegPreset {
+  ULTRAFAST = "ultrafast",
+  MEDIUM = "medium"
+}
+
 const init_strings = [
   "This is the console!"
 ]
@@ -152,9 +158,13 @@ function App() {
 
     console.log("help");
 
+    try {
+      await removeFile(ppmLoc);
+    }
+    catch {
+      setError("Cannot delete gource.ppm from temp (known mac bug)");
+    }
 
-
-    await removeFile(ppmLoc);
     await invoke('show_in_folder', { path: outputLoc });
   }
 
@@ -256,7 +266,7 @@ function App() {
             <Dropdown
               values={launchRatios}
               name="ratio"
-              title="Aspect ratio to launch at"
+              title="Aspect Ratio"
               onChange={(e) => {
                 console.log({ e });
                 setLauchRatio(e.target.selectedIndex)
@@ -311,7 +321,7 @@ function App() {
 
               <div className="mt-6">
                 <label className="label cursor-pointer">
-                  <span className="label-text">Skip stagnating days</span>
+                  <span className="label-text">Skip Stagnating Days</span>
                   <input checked={skipStagnate}
                     onChange={() => setSkipStagnate(!skipStagnate)}
                     type="checkbox" className="checkbox" />
@@ -320,7 +330,7 @@ function App() {
 
               <div className="mt-6">
                 <label className="label cursor-pointer">
-                  <span className="label-text">Output video</span>
+                  <span className="label-text">Output Video</span>
                   <input type="checkbox" checked={outputVideo}
                     onChange={() => setOutputVideo((prev) => !prev)}
                     className="checkbox" />
@@ -328,7 +338,7 @@ function App() {
               </div>
             </div>
             {outputVideo &&
-              <div className="mt-6">
+              <div className="ml-6 mt-6">
                 <label className="label cursor-pointer">
                   <span className="label-text">Placeholder 1</span>
                   <input type="checkbox" className="checkbox" />
