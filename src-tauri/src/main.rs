@@ -2,17 +2,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{
-    process::{Child, Command},
-    sync::{Arc, Mutex},
+    sync::{Mutex},
 };
 mod gource;
 mod open_explorer;
 
-use anyhow::{bail, Context, Result};
-use tauri::api::process::{Command as TauriCommand, CommandChild};
-use tauri::{AppHandle, Config, Manager, Runtime, State};
+use anyhow::{Result};
+use tauri::{AppHandle, Manager, Runtime, State};
 // SharedChild is very much needed becuase even tauri uses it, see https://crates.io/crates/shared_child
-use shared_child::SharedChild;
+
 
 use gource::{Gource, GourceContainer};
 
@@ -34,11 +32,11 @@ enum FolderResult {
 
 async fn is_file_git_repo(path: &str) -> FolderResult {
     let mut git_path = std::path::PathBuf::from(path);
-    if (!git_path.is_dir()) {
+    if !git_path.is_dir() {
         return FolderResult::NotFolder;
     }
     git_path.push(".git");
-    if (git_path.exists()) {
+    if git_path.exists() {
         return FolderResult::GitRepo;
     } else {
         return FolderResult::NotGitRepo;

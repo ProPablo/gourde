@@ -1,8 +1,8 @@
 // https://github.com/tauri-apps/tauri/issues/4062
 #[cfg(target_os = "linux")]
 use fork::{daemon, Fork};
-use std::fs;
-use std::path::PathBuf;
+
+
 use std::process::Command;
 #[cfg(target_os = "linux")]
 use std::{fs::metadata, path::PathBuf}; // dep: fork = "0.1"

@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::Result;
 
 pub trait Gource {
     fn run_gource<R: Runtime>(&self, app: AppHandle<R>, args: Vec<String>,) -> Result<(), String>;

@@ -1,6 +1,6 @@
 use std::{sync::{Arc, Mutex}, process::Command};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Result};
 
 use shared_child::SharedChild;
 use tauri::{Runtime, AppHandle, Manager};
@@ -40,13 +40,13 @@ impl Gource for GourceWindows {
             .spawn();
 
         match maybe_output {
-            Ok(mut output) => {
+            Ok(output) => {
                 // TODO: make this into an arc that is shared across a thread that monitors when its dead, also works for checking when window is dead, and subbing to on_window_event
                 let shared_child = Arc::new(SharedChild::new(output).unwrap());
                 let cloned_child = shared_child.clone();
 
-                let t = std::thread::spawn(move || {
-                    let res = cloned_child.wait();
+                let _t = std::thread::spawn(move || {
+                    let _res = cloned_child.wait();
 
                     app.emit_all("gource-finished", ())
                         .expect("failed to emit event");
