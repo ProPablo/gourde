@@ -9,6 +9,11 @@
             "name": "bin/gource",
             "args": true,
             "sidecar": true
+          },
+          {
+            "name": "ffmpeg",
+            "args": true,
+            "cmd": "ffmpe"
           }
         ]
       }
