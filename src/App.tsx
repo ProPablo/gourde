@@ -16,6 +16,7 @@ import Terminal from "./components/Terminal";
 import { useError } from "./hooks/useError";
 import { useAtom } from "jotai";
 import { lastFileLocAtom } from "./store";
+import SliderTicks from "./components/SliderTicks";
 
 // import { LexRuntimeV2 } from 'aws-sdk'
 // import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
@@ -25,9 +26,12 @@ const launchRatios = [
   "1280x720",
 ]
 
+// NOT used for now but could be useful 
+//https://trac.ffmpeg.org/wiki/Encode/H.264#Preset
 enum FfmpegPreset {
   ULTRAFAST = "ultrafast",
-  MEDIUM = "medium"
+  MEDIUM = "medium",
+  SLOWER = "slower",
 }
 
 const init_strings = [
@@ -56,16 +60,16 @@ function App() {
   const setToast = useToast();
   const setError = useError();
   const [lines, setLines] = useState<string[]>(init_strings);
-  const [name, setName] = useState("");
   // const [location, setLocation] = useState(String.raw`D:/rm_dashboard`);
   const [location, setLocation] = useAtom(lastFileLocAtom);
   const [skipStagnate, setSkipStagnate] = useState(true);
   const [launchRatio, setLauchRatio] = useState(1);
-  // const [messages, setMessages] = useState<MessageModel[]>([]);
   const [secondsPerDay, setSeconds] = useState<number>(50);
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
   const [running, setRunning] = useState<boolean>(false);
   const [runningFFmpeg, setRunningFFmpeg] = useState<boolean>(false);
+  const [ffmpegCrf, setFfmpegCrf] = useState<number>(17);
+  const [ffmpegPreset, setFfmpegPreset] = useState<FfmpegPreset>(FfmpegPreset.MEDIUM);
 
 
   async function openDialog() {
@@ -103,6 +107,7 @@ function App() {
     let outputLoc = await getOutputLoc();
     let ppmLoc = await getppmLoc();
     const appDir = await os.tempdir();
+    let crfVal = (Math.floor(ffmpegCrf)).toString();
     let args = [
       "-y",
       "-r",
@@ -120,7 +125,7 @@ function App() {
       "-pix_fmt",
       "yuv420p",
       "-crf",
-      "1",
+      `${crfVal}`,
       "-threads",
       "0",
       "-bf",
@@ -162,6 +167,7 @@ function App() {
       await removeFile(ppmLoc);
     }
     catch {
+      //https://github.com/tauri-apps/tauri/issues/6256
       setError("Cannot delete gource.ppm from temp (known mac bug)");
     }
 
@@ -284,13 +290,7 @@ function App() {
                 onChange={(e) => setSeconds(parseInt(e.target.value))}
               />
             </div>
-            <div className="flex justify-between text-xs px-2">
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-            </div>
+            <SliderTicks num={5} />
             <div className="flex justify-between text-xs px-2">
               <span>0</span>
               <span>{MAX_SECONDS_PERDAY}</span>
@@ -340,8 +340,16 @@ function App() {
             {outputVideo &&
               <div className="ml-6 mt-6">
                 <label className="label cursor-pointer">
-                  <span className="label-text">Placeholder 1</span>
-                  <input type="checkbox" className="checkbox" />
+
+              <input
+                id="default-range"
+                type="range"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                value={secondsPerDay}
+                min={0}
+                max={100}
+                onChange={(e) => setSeconds(parseInt(e.target.value))}
+              />
                 </label>
                 <label className="label cursor-pointer">
                   <span className="label-text">Placeholder 2</span>
