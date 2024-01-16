@@ -68,6 +68,7 @@ function App() {
   const [outputVideo, setOutputVideo] = useState<boolean>(false);
   const [running, setRunning] = useState<boolean>(false);
   const [runningFFmpeg, setRunningFFmpeg] = useState<boolean>(false);
+  // 0 to 51
   const [ffmpegCrf, setFfmpegCrf] = useState<number>(17);
   const [ffmpegPreset, setFfmpegPreset] = useState<FfmpegPreset>(FfmpegPreset.MEDIUM);
 
@@ -279,12 +280,14 @@ function App() {
               }}
             />
             <div className="mt-6">
-              <label className="block mb-2 text-sm font-medium">Seconds per Day</label>
+              <label className="block mb-2 text-sm font-medium"> {(secondsPerDay/100) * MAX_SECONDS_PERDAY} Seconds per Day</label>
+              
               <input
                 id="default-range"
                 type="range"
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                 value={secondsPerDay}
+                // This NEEDS to exist, 0 to 1 floats dont exist on input type range
                 min={0}
                 max={100}
                 onChange={(e) => setSeconds(parseInt(e.target.value))}
@@ -339,18 +342,29 @@ function App() {
             </div>
             {outputVideo &&
               <div className="ml-6 mt-6">
-                <label className="label cursor-pointer">
 
-              <input
-                id="default-range"
-                type="range"
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                value={secondsPerDay}
-                min={0}
-                max={100}
-                onChange={(e) => setSeconds(parseInt(e.target.value))}
-              />
-                </label>
+                <div className="mt-6">
+                  {/* <label className="block mb-2 text-sm font-medium">Seconds per Day</label> */}
+
+
+                  <div className="flex justify-between items-center">
+                    <div className="font-bold">Label</div>
+                    <div className="text-xs">{ffmpegCrf} / {51}</div>
+                  </div>
+
+                  <input
+                    id="default-range"
+                    type="range"
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    value={ffmpegCrf}
+                    //Values here have to be inverted 
+                    min={0}
+                    max={51}
+                    onChange={(e) => setFfmpegCrf(parseInt(e.target.value))}
+                  />
+
+                </div>
+
                 <label className="label cursor-pointer">
                   <span className="label-text">Placeholder 2</span>
                   <input type="checkbox" className="checkbox" />
@@ -402,7 +416,7 @@ function App() {
                 className="btn btn-lg font-link m-16 hover:scale-110 transition-scale"
                 type="submit"
               >
-                  Gource
+                Gource
               </button>
               <span className={`${running && "badge-success"} badge p-3`}>{running ? 'Gource is running' : 'Gource is not running'}</span>
               <span className={`${runningFFmpeg && "badge-success"} badge p-3`}>{runningFFmpeg ? 'ffmpeg is running' : 'ffmpeg is not running'}</span>
